@@ -14,7 +14,7 @@
         <div class="auth-panel overflow-hidden rounded-[32px] border border-white/60 bg-white/45 shadow-[0_40px_120px_rgba(99,102,241,0.15)] backdrop-blur-2xl lg:grid lg:grid-cols-[1.05fr_1fr]">
           <div class="auth-hero hidden p-10 lg:flex lg:flex-col">
             <div class="hero-pill inline-flex w-fit items-center gap-2 rounded-full border border-white/50 bg-white/20 px-4 py-2 text-sm font-medium text-emerald-700 backdrop-blur-sm">
-              <span>🚀</span>
+              <span></span>
               <span>Bắt đầu miễn phí ngay hôm nay</span>
             </div>
 
@@ -30,16 +30,22 @@
             </div>
 
             <div class="mt-8 space-y-4">
+              <!-- Mục 1: Icon cuốn sách (book-open) -->
               <div class="hero-item">
-                <div class="hero-item-icon bg-gradient-to-br from-emerald-500 to-teal-500">✓</div>
+                <div class="hero-item-icon bg-gradient-to-br from-emerald-500 to-teal-500 text-white flex items-center justify-center">
+                  <font-awesome-icon :icon="['fas', 'book-open']" />
+                </div>
                 <div>
                   <p class="font-semibold text-slate-800">Tạo nền tảng học vững chắc</p>
                   <p class="text-sm text-slate-600">Theo dõi tiến độ và nhận gợi ý phù hợp ngay từ đầu.</p>
                 </div>
               </div>
 
+              <!-- Mục 2: Icon cầu thang (stairs) -->
               <div class="hero-item">
-                <div class="hero-item-icon bg-gradient-to-br from-violet-500 to-pink-500">💡</div>
+                <div class="hero-item-icon bg-gradient-to-br from-violet-500 to-pink-500 text-white flex items-center justify-center">
+                  <font-awesome-icon :icon="['fas', 'stairs']" />
+                </div>
                 <div>
                   <p class="font-semibold text-slate-800">Học từng bước dễ dàng</p>
                   <p class="text-sm text-slate-600">Những bài học ngắn gọn, dễ tiếp cận và cực kỳ hiệu quả.</p>
@@ -127,7 +133,7 @@
                 </div>
               </div>
 
-              <!-- Ô XÁC NHẬN MẬT KHẨU (CÓ NÚT CON MẮT ĐỘC LẬP) -->
+              <!-- Ô XÁC NHẬN MẬT KHẨU -->
               <div class="space-y-2">
                 <label class="block text-sm font-semibold text-slate-700">Xác nhận mật khẩu</label>
                 <div class="field-shell">

@@ -107,7 +107,7 @@
                   </div>
                 </div>
 
-                <button class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
+                <button @click="navigateToLearning" class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
                   Tiếp tục học →
                 </button>
               </div>
@@ -339,7 +339,8 @@ export default {
   },
   methods: {
     navigateToLearning() {
-      this.$router.push('/learning')
+      // Chuyển hướng tới trang Dashboard (hoặc dùng this.$router.push({ name: 'Dashboard' }))
+      this.$router.push('/dashboard')
     },
     scrollToRoadmap() {
       const element = document.getElementById('roadmap')
