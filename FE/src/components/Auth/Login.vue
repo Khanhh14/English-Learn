@@ -76,6 +76,11 @@
             </div>
 
             <form @submit.prevent="handleLogin" class="space-y-5">
+              <!-- Thông báo lỗi (nếu có) -->
+              <div v-if="errorMessage" class="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl">
+                {{ errorMessage }}
+              </div>
+
               <div class="space-y-2">
                 <label class="block text-sm font-semibold text-slate-700">Email</label>
                 <div class="field-shell">
@@ -119,8 +124,12 @@
                 </router-link>
               </div>
 
-              <button type="submit" class="submit-btn mt-2 w-full rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 px-6 py-4 text-base font-bold text-white shadow-[0_20px_30px_rgba(124,58,237,0.35)] transition-all duration-300 hover:scale-[1.01] hover:shadow-[0_24px_40px_rgba(124,58,237,0.45)]">
-                Đăng nhập
+              <button 
+                type="submit" 
+                :disabled="isLoading"
+                class="submit-btn mt-2 w-full rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 px-6 py-4 text-base font-bold text-white shadow-[0_20px_30px_rgba(124,58,237,0.35)] transition-all duration-300 hover:scale-[1.01] hover:shadow-[0_24px_40px_rgba(124,58,237,0.45)] disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {{ isLoading ? 'Đang xử lý...' : 'Đăng nhập' }}
               </button>
 
               <div class="relative my-5">
@@ -182,23 +191,49 @@ export default {
       email: '',
       password: '',
       rememberMe: false,
-      showPassword: false
+      showPassword: false,
+      isLoading: false,
+      errorMessage: ''
     }
   },
   methods: {
     togglePasswordVisibility() {
       this.showPassword = !this.showPassword
     },
-    handleLogin() {
-      console.log('Login attempt:', {
-        email: this.email,
-        password: this.password,
-        rememberMe: this.rememberMe
-      })
-      
-      // Giả lập đăng nhập thành công
-      this.$router.push('/')
-      alert('Đăng nhập thành công!')
+    async handleLogin() {
+      this.errorMessage = ''
+      this.isLoading = true
+
+      try {
+        const response = await fetch('http://localhost:4000/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            email: this.email,
+            password: this.password
+          })
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.message || 'Đăng nhập thất bại!')
+        }
+
+        // Lưu thông tin theo lựa chọn Remember Me
+        const storage = this.rememberMe ? localStorage : sessionStorage
+        storage.setItem('token', data.token)
+        storage.setItem('user', JSON.stringify(data.user))
+
+        // Điều hướng vào trang Dashboard
+        this.$router.push('/dashboard')
+      } catch (err) {
+        this.errorMessage = err.message || 'Không thể kết nối đến máy chủ!'
+      } finally {
+        this.isLoading = false
+      }
     }
   }
 }

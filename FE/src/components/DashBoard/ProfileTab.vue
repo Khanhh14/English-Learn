@@ -4,7 +4,7 @@
     <div class="flex items-center justify-between mb-6">
       <h2 class="text-2xl font-bold text-gray-800">👤 Hồ sơ của tôi</h2>
       <button 
-        @click="isEditing = !isEditing"
+        @click="toggleEdit"
         class="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
       >
         {{ isEditing ? 'Hủy' : 'Chỉnh sửa' }}
@@ -29,24 +29,31 @@
                 </svg>
               </button>
             </div>
+            
             <div class="mt-4">
               <div v-if="!isEditing">
                 <h3 class="text-2xl font-bold text-gray-800">{{ user.name }}</h3>
                 <p class="text-gray-500">{{ user.email }}</p>
               </div>
-              <div v-else class="space-y-3">
-                <input 
-                  v-model="editedUser.name" 
-                  type="text" 
-                  class="w-full px-4 py-2 bg-white/80 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                  placeholder="Họ và tên"
-                />
-                <input 
-                  v-model="editedUser.email" 
-                  type="email" 
-                  class="w-full px-4 py-2 bg-white/80 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                  placeholder="Email"
-                />
+              <div v-else class="space-y-3 text-left">
+                <div>
+                  <label class="block text-xs font-semibold text-gray-500 mb-1">Họ và tên</label>
+                  <input 
+                    v-model="editedUser.name" 
+                    type="text" 
+                    class="w-full px-4 py-2 bg-white/80 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 text-gray-800"
+                    placeholder="Họ và tên"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-gray-500 mb-1">Email (không thể thay đổi)</label>
+                  <input 
+                    :value="user.email" 
+                    type="email" 
+                    disabled 
+                    class="w-full px-4 py-2 bg-gray-100/80 border border-gray-200 rounded-xl text-gray-500 cursor-not-allowed"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -83,7 +90,7 @@
             </div>
             <div class="flex justify-between py-2 border-b border-gray-100">
               <span class="text-gray-500">Tổng điểm</span>
-              <span class="font-medium text-gray-700">{{ user.points.toLocaleString() }}</span>
+              <span class="font-medium text-gray-700">{{ user.points?.toLocaleString() }}</span>
             </div>
             <div class="flex justify-between py-2 border-b border-gray-100">
               <span class="text-gray-500">Tiến độ</span>
@@ -97,45 +104,40 @@
         </div>
       </div>
 
-      <!-- Right Column - Edit Form -->
+      <!-- Right Column - Edit Form / Password Change -->
       <div v-if="isEditing" class="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-gray-200">
-        <h4 class="font-bold text-gray-800 mb-4">Chỉnh sửa thông tin</h4>
+        <h4 class="font-bold text-gray-800 mb-4">🔐 Đổi mật khẩu</h4>
         
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Mật khẩu hiện tại</label>
             <input 
-              v-model="editedUser.name" 
-              type="text" 
-              class="w-full px-4 py-2.5 bg-white/80 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input 
-              v-model="editedUser.email" 
-              type="email" 
+              v-model="passwordForm.currentPassword" 
+              type="password" 
+              placeholder="Nhập mật khẩu hiện tại"
               class="w-full px-4 py-2.5 bg-white/80 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Mật khẩu mới</label>
             <input 
-              v-model="editedUser.password" 
+              v-model="passwordForm.newPassword" 
               type="password" 
-              placeholder="Để trống nếu không đổi"
+              placeholder="Nhập mật khẩu mới"
               class="w-full px-4 py-2.5 bg-white/80 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Xác nhận mật khẩu</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Xác nhận mật khẩu mới</label>
             <input 
-              v-model="editedUser.confirmPassword" 
+              v-model="passwordForm.confirmPassword" 
               type="password" 
               placeholder="Nhập lại mật khẩu mới"
               class="w-full px-4 py-2.5 bg-white/80 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
           </div>
+
+          <p class="text-xs text-gray-400 italic mt-1">* Để trống các ô mật khẩu nếu bạn chỉ muốn thay đổi tên.</p>
 
           <button 
             @click="saveProfile"
@@ -223,29 +225,77 @@ export default {
   data() {
     return {
       isEditing: false,
-      editedUser: {}
+      editedUser: {
+        name: ''
+      },
+      passwordForm: {
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      }
     }
   },
   watch: {
     user: {
       immediate: true,
       handler(val) {
-        this.editedUser = { ...val }
+        if (val) {
+          this.editedUser = { name: val.name || '' }
+        }
       }
     }
   },
   methods: {
+    toggleEdit() {
+      this.isEditing = !this.isEditing
+      if (!this.isEditing) {
+        this.resetForm()
+      }
+    },
+    resetForm() {
+      this.editedUser = { name: this.user.name || '' }
+      this.passwordForm = {
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      }
+    },
     saveProfile() {
-      if (this.editedUser.password && this.editedUser.password !== this.editedUser.confirmPassword) {
-        alert('Mật khẩu xác nhận không khớp!')
+      if (!this.editedUser.name.trim()) {
+        alert('Tên không được để trống!')
         return
       }
-      
-      // Remove password fields before sending
-      const {  ...userData } = this.editedUser
-      this.$emit('update-user', userData)
+
+      const isChangingPassword = this.passwordForm.currentPassword || this.passwordForm.newPassword || this.passwordForm.confirmPassword
+
+      if (isChangingPassword) {
+        if (!this.passwordForm.currentPassword) {
+          alert('Vui lòng nhập mật khẩu hiện tại!')
+          return
+        }
+        if (!this.passwordForm.newPassword) {
+          alert('Vui lòng nhập mật khẩu mới!')
+          return
+        }
+        if (this.passwordForm.newPassword !== this.passwordForm.confirmPassword) {
+          alert('Mật khẩu xác nhận không khớp!')
+          return
+        }
+      }
+
+      const payload = {
+        name: this.editedUser.name
+      }
+
+      if (isChangingPassword) {
+        payload.currentPassword = this.passwordForm.currentPassword
+        payload.newPassword = this.passwordForm.newPassword
+      }
+
+      this.$emit('update-user', payload)
       this.isEditing = false
-      alert('✅ Cập nhật hồ sơ thành công!')
+      this.resetForm()
+      alert('✅ Cập nhật thông tin thành công!')
     }
   }
 }
