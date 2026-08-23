@@ -8,15 +8,16 @@ import {
   faLocationDot, 
   faPhone, 
   faEnvelope,
-  faBookOpen,         // Icon cuốn sách (fas)
-  faStairs as fasStairs, // Icon cầu thang (fas)
-  faHeart as fasHeart 
+  faBookOpen,
+  faStairs as fasStairs,
+  faHeart as fasHeart,
+  faRoute, // Icon lộ trình
+  faBrain  // Icon não bộ / AI (gói free)
 } from '@fortawesome/free-solid-svg-icons'
 
 // 2. Import các icon Regular (Nét viền mảnh - far)
 import { 
   faHeart as farHeart
-  // faStairs as farStairs // (Chỉ mở nếu bạn dùng FontAwesome Pro)
 } from '@fortawesome/free-regular-svg-icons'
 
 // Đăng ký toàn bộ vào thư viện
@@ -28,7 +29,9 @@ library.add(
   faBookOpen,
   fasStairs,
   fasHeart, 
-  farHeart
+  farHeart,
+  faRoute,
+  faBrain
 )
 
 export default FontAwesomeIcon

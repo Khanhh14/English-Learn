@@ -30,16 +30,22 @@
             </div>
 
             <div class="mt-8 space-y-4">
+              <!-- Lộ trình cá nhân hóa -->
               <div class="hero-item">
-                <div class="hero-item-icon bg-indigo-500">⚡</div>
+                <div class="hero-item-icon bg-indigo-500 text-white flex items-center justify-center">
+                  <font-awesome-icon :icon="['fas', 'route']" />
+                </div>
                 <div>
                   <p class="font-semibold text-slate-800">Lộ trình cá nhân hóa</p>
                   <p class="text-sm text-slate-600">Khoá học được đề xuất theo trình độ hiện tại.</p>
                 </div>
               </div>
 
+              <!-- Ghi nhớ theo phương pháp AI -->
               <div class="hero-item">
-                <div class="hero-item-icon bg-gradient-to-br from-purple-500 to-pink-500">🎯</div>
+                <div class="hero-item-icon bg-gradient-to-br from-purple-500 to-pink-500 text-white flex items-center justify-center">
+                  <font-awesome-icon :icon="['fas', 'brain']" />
+                </div>
                 <div>
                   <p class="font-semibold text-slate-800">Ghi nhớ theo phương pháp AI</p>
                   <p class="text-sm text-slate-600">Ôn tập thông minh giúp bạn tiến bộ nhanh hơn.</p>
@@ -76,7 +82,6 @@
             </div>
 
             <form @submit.prevent="handleLogin" class="space-y-5">
-              <!-- Thông báo lỗi (nếu có) -->
               <div v-if="errorMessage" class="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl">
                 {{ errorMessage }}
               </div>
@@ -222,12 +227,10 @@ export default {
           throw new Error(data.message || 'Đăng nhập thất bại!')
         }
 
-        // Lưu thông tin theo lựa chọn Remember Me
         const storage = this.rememberMe ? localStorage : sessionStorage
         storage.setItem('token', data.token)
         storage.setItem('user', JSON.stringify(data.user))
 
-        // Điều hướng vào trang Dashboard
         this.$router.push('/dashboard')
       } catch (err) {
         this.errorMessage = err.message || 'Không thể kết nối đến máy chủ!'

@@ -17,9 +17,11 @@ app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
 // Import Routes
 const authRoutes = require('./src/routes/auth.routes');
+const vocabRoutes = require('./src/routes/vocab.routes');
 
 // Đăng ký API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/vocab', vocabRoutes);
 
 // Endpoint kiểm tra hoạt động của server
 app.get('/api/health', (req, res) => {
