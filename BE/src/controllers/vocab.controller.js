@@ -1,5 +1,5 @@
 const DictionaryService = require('../services/dictionary.service');
-const pool = require('../config/db'); // Kiểm tra file kết nối DB của bạn (db.js hoặc database.js)
+const pool = require('../config/db'); // Đường dẫn file kết nối database của bạn
 
 const dictService = new DictionaryService(pool);
 
@@ -61,8 +61,31 @@ const getWordsByDeck = async (req, res) => {
   }
 };
 
+// 4. Lấy danh sách câu mẫu thuộc Deck
+const getSentencesByDeck = async (req, res) => {
+  try {
+    const { deckId } = req.params;
+    const [sentences] = await pool.execute(
+      `SELECT DISTINCT s.id, s.english, s.vietnamese, s.audio_url, s.difficulty_level 
+       FROM sentences s
+       JOIN word_sentences ws ON s.id = ws.sentence_id
+       JOIN deck_words dw ON ws.word_id = dw.word_id
+       WHERE dw.deck_id = ?`,
+      [deckId]
+    );
+    return res.status(200).json({ success: true, data: sentences });
+  } catch (error) {
+    console.error('Lỗi tại getSentencesByDeck:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: error.message || 'Lỗi server khi lấy danh sách câu mẫu' 
+    });
+  }
+};
+
 module.exports = {
   getWordDetail,
   getDecks,
-  getWordsByDeck
+  getWordsByDeck,
+  getSentencesByDeck
 };

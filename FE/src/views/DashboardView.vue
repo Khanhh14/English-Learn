@@ -118,8 +118,24 @@ export default {
     }
   },
   methods: {
-    goToLearning() {
-      this.$router.push('/learning')
+    goToLearning(payload) {
+      // If called without payload, just go to learning root
+      if (!payload) {
+        this.$router.push({ name: 'learning' });
+        return;
+      }
+
+      const { chapterId, lessonType, chapterTitle } = payload || {};
+
+      // Build params and query for navigation
+      const params = {};
+      if (chapterId !== undefined && chapterId !== null) params.deckId = chapterId;
+
+      const query = {};
+      if (chapterTitle) query.deckTitle = chapterTitle;
+      if (lessonType) query.mode = lessonType;
+
+      this.$router.push({ name: 'learning', params, query });
     },
     updateUser(updatedData) {
       this.user = { ...this.user, ...updatedData }

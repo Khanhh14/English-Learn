@@ -1,6 +1,6 @@
 // src/router/index.js
-import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import { createRouter, createWebHistory } from 'vue-router';
+import HomeView from '../views/HomeView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -21,6 +21,12 @@ const router = createRouter({
       component: () => import('../views/DashboardView.vue'),
     },
     {
+      path: '/learning/:deckId?',
+      name: 'learning',
+      component: () => import('../views/LearningView.vue'),
+      props: true,
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('../components/Auth/Login.vue'),
@@ -36,6 +42,6 @@ const router = createRouter({
       component: () => import('../components/Auth/ForgotPassword.vue'),
     },
   ],
-})
+});
 
-export default router
+export default router;
