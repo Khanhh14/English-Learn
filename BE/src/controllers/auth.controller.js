@@ -68,11 +68,16 @@ exports.login = async (req, res) => {
       token,
       user: {
         id: user.id,
+        name: user.username,
         username: user.username,
         email: user.email,
         role: user.role,
-        streak_count: user.streak_count,
-        daily_goal: user.daily_goal
+        streak: user.streak_count || 0,
+        level: user.level || 1,
+        points: user.points || user.xp || 0,
+        totalWords: user.total_words || 0,
+        totalLessons: user.total_lessons || 0,
+        joinDate: user.created_at || user.createdAt
       }
     });
   } catch (error) {
@@ -80,10 +85,94 @@ exports.login = async (req, res) => {
   }
 };
 
-// 3. ĐỔI MẬT KHẨU (Khi đã đăng nhập)
+// 3. LẤY THÔNG TIN USER HIỆN TẠI (GET /api/auth/me)
+exports.getMe = async (req, res) => {
+  try {
+    const userId = req.user.id; // Lấy từ auth middleware (req.user)
+
+    const [users] = await db.query(
+      'SELECT id, username, email, role, streak_count, daily_goal, created_at FROM users WHERE id = ?',
+      [userId]
+    );
+
+    if (users.length === 0) {
+      return res.status(404).json({ message: 'Không tìm thấy người dùng!' });
+    }
+
+    const user = users[0];
+
+    res.status(200).json({
+      success: true,
+      data: {
+        id: user.id,
+        name: user.username,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        streak: user.streak_count || 0,
+        dailyGoal: user.daily_goal || 10,
+        level: 1,
+        points: 0,
+        totalWords: 0,
+        totalLessons: 0,
+        progress: 0,
+        joinDate: user.created_at
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server!', error: error.message });
+  }
+};
+
+// 4. CẬP NHẬT THÔNG TIN CÁ NHÂN (PUT /api/users/profile hoặc PUT /api/auth/profile)
+exports.updateProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { name, currentPassword, newPassword } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ message: 'Tên hiển thị không được để trống!' });
+    }
+
+    // Nếu có yêu cầu đổi mật khẩu kèm theo
+    if (newPassword) {
+      if (!currentPassword) {
+        return res.status(400).json({ message: 'Vui lòng cung cấp mật khẩu hiện tại!' });
+      }
+
+      const [users] = await db.query('SELECT password FROM users WHERE id = ?', [userId]);
+      if (users.length === 0) {
+        return res.status(404).json({ message: 'Người dùng không tồn tại!' });
+      }
+
+      const isMatch = await bcrypt.compare(currentPassword, users[0].password);
+      if (!isMatch) {
+        return res.status(400).json({ message: 'Mật khẩu hiện tại không chính xác!' });
+      }
+
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+      await db.query('UPDATE users SET username = ?, password = ? WHERE id = ?', [name, hashedPassword, userId]);
+    } else {
+      // Chỉ cập nhật username/tên
+      await db.query('UPDATE users SET username = ? WHERE id = ?', [name, userId]);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Cập nhật thông tin thành công!',
+      data: { name }
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server!', error: error.message });
+  }
+};
+
+// 5. ĐỔI MẬT KHẨU (Khi đã đăng nhập)
 exports.changePassword = async (req, res) => {
   try {
-    const userId = req.user.id; // Lấy từ middleware auth
+    const userId = req.user.id;
     const { oldPassword, newPassword } = req.body;
 
     const [users] = await db.query('SELECT password FROM users WHERE id = ?', [userId]);
@@ -107,7 +196,7 @@ exports.changePassword = async (req, res) => {
   }
 };
 
-// 4. QUÊN MẬT KHẨU (Gửi token reset qua email)
+// 6. QUÊN MẬT KHẨU (Gửi token reset qua email)
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -118,10 +207,8 @@ exports.forgotPassword = async (req, res) => {
     }
 
     const user = users[0];
-    // Token reset chỉ dùng 15 phút
     const resetToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '15m' });
 
-    // Cấu hình gửi mail
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -145,7 +232,7 @@ exports.forgotPassword = async (req, res) => {
   }
 };
 
-// 5. ĐẶT LẠI MẬT KHẨU MỚI (Từ link gửi qua email)
+// 7. ĐẶT LẠI MẬT KHẨU MỚI (Từ link gửi qua email)
 exports.resetPassword = async (req, res) => {
   try {
     const { token, newPassword } = req.body;

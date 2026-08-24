@@ -102,39 +102,79 @@
             </div>
           </div>
 
-          <!-- Redesigned Lesson Cards -->
+          <!-- Lesson Cards -->
           <div class="grid grid-cols-1 gap-3.5">
             <div
               v-for="lesson in selectedChapter.lessons"
               :key="lesson.id"
               @click="handleStartLesson(selectedChapter.id, lesson.id)"
-              class="group relative flex flex-col justify-between gap-4 rounded-2xl border-2 border-slate-100 bg-white p-4 transition-all hover:border-indigo-200 hover:shadow-md sm:flex-row sm:items-center sm:p-5 cursor-pointer"
+              :class="[
+                'group relative flex flex-col justify-between gap-4 rounded-2xl border-2 bg-white p-4 transition-all sm:flex-row sm:items-center sm:p-5 cursor-pointer',
+                isLessonCompleted(selectedChapter.id, lesson.id)
+                  ? 'border-emerald-200/80 hover:border-emerald-400 hover:shadow-md'
+                  : 'border-slate-100 hover:border-indigo-200 hover:shadow-md'
+              ]"
             >
               <!-- Left: Lesson Info -->
               <div class="flex items-center gap-4">
                 <!-- Lesson Index Icon Box -->
-                <div class="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-slate-50 border border-slate-100 text-2xl shadow-inner group-hover:scale-105 group-hover:bg-indigo-50 transition-all">
+                <div 
+                  :class="[
+                    'relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border text-2xl shadow-inner transition-all group-hover:scale-105',
+                    isLessonCompleted(selectedChapter.id, lesson.id)
+                      ? 'bg-emerald-50 border-emerald-100'
+                      : 'bg-slate-50 border-slate-100 group-hover:bg-indigo-50'
+                  ]"
+                >
                   <span>{{ lesson.icon }}</span>
-                  <span class="absolute -top-1.5 -left-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-slate-800 text-[10px] font-black text-white">
+                  <!-- Badge hoàn thành hoặc số thứ tự -->
+                  <span 
+                    v-if="isLessonCompleted(selectedChapter.id, lesson.id)"
+                    class="absolute -top-1.5 -left-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-black text-white shadow-xs"
+                    title="Đã hoàn thành"
+                  >
+                    ✓
+                  </span>
+                  <span 
+                    v-else
+                    class="absolute -top-1.5 -left-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-slate-800 text-[10px] font-black text-white"
+                  >
                     {{ lesson.index }}
                   </span>
                 </div>
 
                 <!-- Text Detail -->
                 <div>
-                  <div class="flex items-center gap-2">
-                    <h4 class="text-base font-extrabold text-slate-800 group-hover:text-indigo-600 transition-colors">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <h4 
+                      :class="[
+                        'text-base font-extrabold transition-colors',
+                        isLessonCompleted(selectedChapter.id, lesson.id)
+                          ? 'text-slate-800 group-hover:text-emerald-600'
+                          : 'text-slate-800 group-hover:text-indigo-600'
+                      ]"
+                    >
                       {{ lesson.title }}
                     </h4>
+
+                    <!-- Tag loại bài học -->
                     <span 
                       :class="[
                         'rounded-md px-2 py-0.5 text-[10px] font-black uppercase tracking-wider',
-                        lesson.type === 'Mới' ? 'bg-emerald-100 text-emerald-700' : '',
+                        lesson.type === 'Mới' ? 'bg-sky-100 text-sky-700' : '',
                         lesson.type === 'Ôn tập' ? 'bg-amber-100 text-amber-700' : '',
                         lesson.type === 'Tổng kết' ? 'bg-indigo-100 text-indigo-700' : ''
                       ]"
                     >
                       {{ lesson.type }}
+                    </span>
+
+                    <!-- Tag Đã hoàn thành -->
+                    <span 
+                      v-if="isLessonCompleted(selectedChapter.id, lesson.id)"
+                      class="rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-700"
+                    >
+                      Đã hoàn thành
                     </span>
                   </div>
                   <p class="mt-0.5 text-xs font-semibold text-slate-400">
@@ -149,7 +189,18 @@
                   <span>📝</span> {{ lesson.questions }} câu
                 </span>
 
+                <!-- Nút Ôn tập nếu đã hoàn thành, ngược lại hiển thị Bắt đầu -->
                 <button 
+                  v-if="isLessonCompleted(selectedChapter.id, lesson.id)"
+                  type="button"
+                  class="flex items-center gap-1 rounded-xl border-b-4 border-emerald-700 bg-emerald-600 px-5 py-2 text-xs font-black text-white shadow-xs transition hover:bg-emerald-500 active:border-b-0 active:translate-y-1"
+                >
+                  <span>Ôn tập</span>
+                  <span>↺</span>
+                </button>
+
+                <button 
+                  v-else
                   type="button"
                   class="flex items-center gap-1 rounded-xl border-b-4 border-indigo-700 bg-indigo-600 px-5 py-2 text-xs font-black text-white shadow-xs transition hover:bg-indigo-500 active:border-b-0 active:translate-y-1"
                 >
@@ -180,13 +231,18 @@ export default {
       loading: true,
       errorMessage: '',
       streak: 3,
-      totalXp: 0
+      totalXp: 0,
+      completedLessonKeys: ['4-new-1'] 
     };
   },
   mounted() {
     this.fetchLearningData();
   },
   methods: {
+    isLessonCompleted(chapterId, lessonId) {
+      return this.completedLessonKeys.includes(`${chapterId}-${lessonId}`);
+    },
+
     async fetchLearningData() {
       try {
         this.loading = true;
@@ -234,7 +290,8 @@ export default {
         chapterId, 
         lessonId, 
         deckId: chapterId,
-        deckTitle: this.selectedChapter ? this.selectedChapter.name : 'Bài học'
+        deckTitle: this.selectedChapter ? this.selectedChapter.name : 'Bài học',
+        isReview: this.isLessonCompleted(chapterId, lessonId)
       });
     },
 

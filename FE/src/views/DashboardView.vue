@@ -45,13 +45,13 @@
                 </nav>
               </div>
 
-              <!-- Footer Sidebar: Nút Trang chủ thay cho nút Đăng xuất -->
+              <!-- Footer Sidebar: Chỉ giữ lại nút Trang chủ -->
               <div class="pt-4 border-t border-gray-200/50">
                 <router-link 
                   to="/" 
-                  class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-all font-medium"
+                  class="w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-all font-medium text-sm"
                 >
-                  <span class="text-xl">🏠</span>
+                  <span class="text-lg">🏠</span>
                   <span>Trang chủ</span>
                 </router-link>
               </div>
@@ -93,12 +93,13 @@
 </template>
 
 <script>
-import LearningTab from '@/components/DashBoard/LearningTab.vue'
-import PracticeTab from '@/components/DashBoard/PracticeTab.vue'
-import RankingTab from '@/components/DashBoard/RankingTab.vue'
-import ShopTab from '@/components/DashBoard/ShopTab.vue'
-import MissionsTab from '@/components/DashBoard/MissionsTab.vue'
-import ProfileTab from '@/components/DashBoard/ProfileTab.vue'
+import axios from 'axios';
+import LearningTab from '@/components/DashBoard/LearningTab.vue';
+import PracticeTab from '@/components/DashBoard/PracticeTab.vue';
+import RankingTab from '@/components/DashBoard/RankingTab.vue';
+import ShopTab from '@/components/DashBoard/ShopTab.vue';
+import MissionsTab from '@/components/DashBoard/MissionsTab.vue';
+import ProfileTab from '@/components/DashBoard/ProfileTab.vue';
 
 export default {
   name: 'DashboardView',
@@ -114,16 +115,17 @@ export default {
     return {
       activeTab: 'learning',
       user: {
-        name: 'Nguyễn Văn A',
-        email: 'nguyenvana@email.com',
-        avatar: '👤',
-        level: 7,
-        points: 1284,
-        progress: 68,
-        joinDate: '15/06/2025',
-        streak: 12,
-        totalWords: 347,
-        totalLessons: 45
+        id: null,
+        name: '',
+        email: '',
+        avatar: '',
+        level: 1,
+        points: 0,
+        progress: 0,
+        joinDate: '',
+        streak: 0,
+        totalWords: 0,
+        totalLessons: 0
       },
       menuItems: [
         { id: 'learning', name: 'Học ngay', icon: '📚' },
@@ -133,12 +135,13 @@ export default {
         { id: 'missions', name: 'Nhiệm vụ', icon: '🎯', badge: '3' },
         { id: 'profile', name: 'Hồ sơ', icon: '👤' }
       ]
-    }
+    };
   },
   mounted() {
     if (this.$route.query && this.$route.query.tab) {
       this.activeTab = this.$route.query.tab;
     }
+    this.loadUserData();
   },
   watch: {
     '$route.query.tab'(newTab) {
@@ -148,6 +151,40 @@ export default {
     }
   },
   methods: {
+    loadUserData() {
+      // 1. Nạp từ localStorage
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        try {
+          const parsed = JSON.parse(storedUser);
+          this.user = { ...this.user, ...parsed };
+        } catch (e) {
+          console.error('Lỗi phân tích dữ liệu user từ localStorage:', e);
+        }
+      }
+
+      // 2. Đồng bộ dữ liệu mới nhất từ server backend
+      this.fetchUserFromServer();
+    },
+
+    async fetchUserFromServer() {
+      const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+      if (!token) return;
+
+      try {
+        const res = await axios.get('http://localhost:4000/api/auth/me', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const serverData = res.data?.data || res.data?.user || res.data;
+        if (serverData) {
+          this.user = { ...this.user, ...serverData };
+          localStorage.setItem('user', JSON.stringify(this.user));
+        }
+      } catch (err) {
+        console.warn('Chưa thể lấy thông tin user từ API:', err);
+      }
+    },
+
     goToLearning(payload) {
       if (!payload) {
         this.$router.push({ name: 'learning' });
@@ -155,7 +192,6 @@ export default {
       }
 
       const { chapterId, lessonType, chapterTitle } = payload || {};
-
       const params = {};
       if (chapterId !== undefined && chapterId !== null) params.deckId = chapterId;
 
@@ -165,11 +201,13 @@ export default {
 
       this.$router.push({ name: 'learning', params, query });
     },
+
     updateUser(updatedData) {
-      this.user = { ...this.user, ...updatedData }
+      this.user = { ...this.user, ...updatedData };
+      localStorage.setItem('user', JSON.stringify(this.user));
     }
   }
-}
+};
 </script>
 
 <style scoped>

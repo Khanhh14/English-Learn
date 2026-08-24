@@ -18,8 +18,14 @@
         <div class="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-gray-200">
           <div class="text-center">
             <div class="relative inline-block">
-              <div class="w-32 h-32 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full mx-auto flex items-center justify-center text-5xl text-white shadow-xl">
-                <span v-if="!isEditing">{{ user.avatar || user.name.charAt(0) }}</span>
+              <div class="w-32 h-32 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full mx-auto flex items-center justify-center text-5xl text-white shadow-xl overflow-hidden font-bold">
+                <img 
+                  v-if="currentUser.avatar && !isEditing" 
+                  :src="currentUser.avatar" 
+                  alt="Avatar" 
+                  class="w-full h-full object-cover"
+                />
+                <span v-else-if="!isEditing">{{ userInitial }}</span>
                 <span v-else class="text-4xl">📷</span>
               </div>
               <button v-if="isEditing" class="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-lg hover:shadow-xl transition-all">
@@ -32,8 +38,8 @@
             
             <div class="mt-4">
               <div v-if="!isEditing">
-                <h3 class="text-2xl font-bold text-gray-800">{{ user.name }}</h3>
-                <p class="text-gray-500">{{ user.email }}</p>
+                <h3 class="text-2xl font-bold text-gray-800">{{ displayUserName }}</h3>
+                <p class="text-gray-500 text-sm mt-1">{{ currentUser.email || 'Chưa cập nhật email' }}</p>
               </div>
               <div v-else class="space-y-3 text-left">
                 <div>
@@ -48,7 +54,7 @@
                 <div>
                   <label class="block text-xs font-semibold text-gray-500 mb-1">Email (không thể thay đổi)</label>
                   <input 
-                    :value="user.email" 
+                    :value="currentUser.email" 
                     type="email" 
                     disabled 
                     class="w-full px-4 py-2 bg-gray-100/80 border border-gray-200 rounded-xl text-gray-500 cursor-not-allowed"
@@ -61,44 +67,44 @@
           <div class="mt-6 pt-6 border-t border-gray-200">
             <div class="grid grid-cols-2 gap-4">
               <div class="text-center">
-                <p class="text-2xl font-bold text-indigo-600">{{ user.streak }}</p>
+                <p class="text-2xl font-bold text-indigo-600">{{ currentUser.streak ?? currentUser.streak_count ?? 0 }}</p>
                 <p class="text-xs text-gray-500">🔥 Chuỗi ngày</p>
               </div>
               <div class="text-center">
-                <p class="text-2xl font-bold text-purple-600">{{ user.level }}</p>
+                <p class="text-2xl font-bold text-purple-600">{{ currentUser.level || 1 }}</p>
                 <p class="text-xs text-gray-500">🏆 Cấp độ</p>
               </div>
               <div class="text-center">
-                <p class="text-2xl font-bold text-green-600">{{ user.totalWords }}</p>
+                <p class="text-2xl font-bold text-green-600">{{ currentUser.totalWords ?? currentUser.total_words ?? 0 }}</p>
                 <p class="text-xs text-gray-500">📚 Từ vựng</p>
               </div>
               <div class="text-center">
-                <p class="text-2xl font-bold text-blue-600">{{ user.totalLessons }}</p>
+                <p class="text-2xl font-bold text-blue-600">{{ currentUser.totalLessons ?? currentUser.total_lessons ?? 0 }}</p>
                 <p class="text-xs text-gray-500">📖 Bài học</p>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Thông tin thêm -->
+        <!-- Thông tin chi tiết -->
         <div class="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-gray-200">
           <h4 class="font-bold text-gray-800 mb-3">Thông tin chi tiết</h4>
           <div class="space-y-2 text-sm">
             <div class="flex justify-between py-2 border-b border-gray-100">
               <span class="text-gray-500">Ngày tham gia</span>
-              <span class="font-medium text-gray-700">{{ user.joinDate }}</span>
+              <span class="font-medium text-gray-700">{{ formatDate(currentUser.createdAt || currentUser.created_at || currentUser.joinDate) }}</span>
             </div>
             <div class="flex justify-between py-2 border-b border-gray-100">
-              <span class="text-gray-500">Tổng điểm</span>
-              <span class="font-medium text-gray-700">{{ user.points?.toLocaleString() }}</span>
+              <span class="text-gray-500">Tổng điểm XP</span>
+              <span class="font-medium text-gray-700">{{ (currentUser.points || currentUser.xp || 0).toLocaleString() }} XP</span>
             </div>
             <div class="flex justify-between py-2 border-b border-gray-100">
               <span class="text-gray-500">Tiến độ</span>
-              <span class="font-medium text-gray-700">{{ user.progress }}%</span>
+              <span class="font-medium text-gray-700">{{ currentUser.progress || 0 }}%</span>
             </div>
             <div class="flex justify-between py-2">
               <span class="text-gray-500">Hạng</span>
-              <span class="font-medium text-gray-700">#{{ user.rank || 5 }}</span>
+              <span class="font-medium text-gray-700">#{{ currentUser.rank || 1 }}</span>
             </div>
           </div>
         </div>
@@ -141,9 +147,10 @@
 
           <button 
             @click="saveProfile"
-            class="w-full mt-4 px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+            :disabled="saving"
+            class="w-full mt-4 px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 disabled:opacity-50"
           >
-            Lưu thay đổi
+            {{ saving ? 'Đang lưu...' : 'Lưu thay đổi' }}
           </button>
         </div>
       </div>
@@ -156,37 +163,37 @@
           <div>
             <div class="flex justify-between text-sm mb-1">
               <span class="text-gray-600">Từ vựng đã học</span>
-              <span class="font-medium text-gray-700">{{ user.totalWords }}/500</span>
+              <span class="font-medium text-gray-700">{{ currentUser.totalWords || currentUser.total_words || 0 }}/500</span>
             </div>
             <div class="w-full bg-gray-200 rounded-full h-2">
-              <div class="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full" :style="{ width: (user.totalWords / 500 * 100) + '%' }"></div>
+              <div class="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full" :style="{ width: Math.min(((currentUser.totalWords || currentUser.total_words || 0) / 500 * 100), 100) + '%' }"></div>
             </div>
           </div>
           <div>
             <div class="flex justify-between text-sm mb-1">
               <span class="text-gray-600">Bài học đã hoàn thành</span>
-              <span class="font-medium text-gray-700">{{ user.totalLessons }}/100</span>
+              <span class="font-medium text-gray-700">{{ currentUser.totalLessons || currentUser.total_lessons || 0 }}/100</span>
             </div>
             <div class="w-full bg-gray-200 rounded-full h-2">
-              <div class="bg-gradient-to-r from-blue-500 to-cyan-500 h-2 rounded-full" :style="{ width: (user.totalLessons / 100 * 100) + '%' }"></div>
+              <div class="bg-gradient-to-r from-blue-500 to-cyan-500 h-2 rounded-full" :style="{ width: Math.min(((currentUser.totalLessons || currentUser.total_lessons || 0) / 100 * 100), 100) + '%' }"></div>
             </div>
           </div>
           <div>
             <div class="flex justify-between text-sm mb-1">
               <span class="text-gray-600">Điểm tích lũy</span>
-              <span class="font-medium text-gray-700">{{ user.points }}/5000</span>
+              <span class="font-medium text-gray-700">{{ (currentUser.points || currentUser.xp || 0) }}/5000</span>
             </div>
             <div class="w-full bg-gray-200 rounded-full h-2">
-              <div class="bg-gradient-to-r from-yellow-500 to-orange-500 h-2 rounded-full" :style="{ width: (user.points / 5000 * 100) + '%' }"></div>
+              <div class="bg-gradient-to-r from-yellow-500 to-orange-500 h-2 rounded-full" :style="{ width: Math.min(((currentUser.points || currentUser.xp || 0) / 5000 * 100), 100) + '%' }"></div>
             </div>
           </div>
           <div>
             <div class="flex justify-between text-sm mb-1">
               <span class="text-gray-600">Tiến độ lên cấp</span>
-              <span class="font-medium text-gray-700">{{ user.progress }}%</span>
+              <span class="font-medium text-gray-700">{{ currentUser.progress || 0 }}%</span>
             </div>
             <div class="w-full bg-gray-200 rounded-full h-2">
-              <div class="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full" :style="{ width: user.progress + '%' }"></div>
+              <div class="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full" :style="{ width: (currentUser.progress || 0) + '%' }"></div>
             </div>
           </div>
         </div>
@@ -195,15 +202,15 @@
           <div class="grid grid-cols-3 gap-3">
             <div class="text-center p-3 bg-indigo-50 rounded-xl">
               <p class="text-xs text-gray-500">Học</p>
-              <p class="text-lg font-bold text-indigo-600">12h</p>
+              <p class="text-lg font-bold text-indigo-600">{{ currentUser.learningHours || '0h' }}</p>
             </div>
             <div class="text-center p-3 bg-purple-50 rounded-xl">
               <p class="text-xs text-gray-500">Luyện tập</p>
-              <p class="text-lg font-bold text-purple-600">8h</p>
+              <p class="text-lg font-bold text-purple-600">{{ currentUser.practiceHours || '0h' }}</p>
             </div>
             <div class="text-center p-3 bg-pink-50 rounded-xl">
               <p class="text-xs text-gray-500">Tổng</p>
-              <p class="text-lg font-bold text-pink-600">20h</p>
+              <p class="text-lg font-bold text-pink-600">{{ currentUser.totalHours || '0h' }}</p>
             </div>
           </div>
         </div>
@@ -213,18 +220,22 @@
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
   name: 'ProfileTab',
   props: {
     user: {
       type: Object,
-      required: true
+      default: () => ({})
     }
   },
   emits: ['update-user'],
   data() {
     return {
+      currentUser: {},
       isEditing: false,
+      saving: false,
       editedUser: {
         name: ''
       },
@@ -233,70 +244,173 @@ export default {
         newPassword: '',
         confirmPassword: ''
       }
+    };
+  },
+  computed: {
+    displayUserName() {
+      return this.currentUser.name || this.currentUser.username || 'Người dùng';
+    },
+    userInitial() {
+      const name = this.displayUserName;
+      return name.charAt(0).toUpperCase();
     }
   },
   watch: {
     user: {
       immediate: true,
+      deep: true,
       handler(val) {
-        if (val) {
-          this.editedUser = { name: val.name || '' }
+        if (val && Object.keys(val).length > 0 && val.name && val.name !== 'Nguyễn Văn A') {
+          this.currentUser = { ...this.currentUser, ...val };
+          if (!this.isEditing) {
+            this.editedUser.name = val.name || val.username || '';
+          }
         }
       }
     }
   },
+  created() {
+    this.initUserData();
+  },
   methods: {
-    toggleEdit() {
-      this.isEditing = !this.isEditing
-      if (!this.isEditing) {
-        this.resetForm()
+    initUserData() {
+      // 1. Đọc ngay từ localStorage
+      const stored = localStorage.getItem('user');
+      if (stored) {
+        try {
+          this.currentUser = JSON.parse(stored);
+          this.editedUser.name = this.currentUser.name || this.currentUser.username || '';
+          console.log('[ProfileTab] Đã nạp từ localStorage:', this.currentUser);
+        } catch (e) {
+          console.error('[ProfileTab] Lỗi parse localStorage user:', e);
+        }
+      }
+
+      // 2. Nếu có props từ cha truyền sang
+      if (this.user && Object.keys(this.user).length > 0 && this.user.name && this.user.name !== 'Nguyễn Văn A') {
+        this.currentUser = { ...this.currentUser, ...this.user };
+        this.editedUser.name = this.currentUser.name || this.currentUser.username || '';
+      }
+
+      // 3. Gọi API lấy thông tin mới nhất
+      this.fetchFreshUserProfile();
+    },
+
+    async fetchFreshUserProfile() {
+      const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+      if (!token) {
+        console.warn('[ProfileTab] Chưa có Token trong localStorage!');
+        return;
+      }
+
+      try {
+        const res = await axios.get('http://localhost:4000/api/auth/me', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        console.log('[ProfileTab] API /api/auth/me trả về:', res.data);
+        const fetchedData = res.data?.data || res.data?.user || res.data;
+        if (fetchedData) {
+          this.currentUser = { ...this.currentUser, ...fetchedData };
+          localStorage.setItem('user', JSON.stringify(this.currentUser));
+          if (!this.isEditing) {
+            this.editedUser.name = this.currentUser.name || this.currentUser.username || '';
+          }
+        }
+      } catch (err) {
+        console.error('[ProfileTab] Lỗi gọi API /api/auth/me:', err.response?.data || err.message);
       }
     },
+
+    formatDate(dateStr) {
+      if (!dateStr) return '01/01/2026';
+      try {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('vi-VN');
+      } catch {
+        return dateStr;
+      }
+    },
+
+    toggleEdit() {
+      this.isEditing = !this.isEditing;
+      if (!this.isEditing) {
+        this.resetForm();
+      } else {
+        this.editedUser.name = this.currentUser.name || this.currentUser.username || '';
+      }
+    },
+
     resetForm() {
-      this.editedUser = { name: this.user.name || '' }
+      this.editedUser.name = this.currentUser.name || this.currentUser.username || '';
       this.passwordForm = {
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
-      }
+      };
     },
-    saveProfile() {
+
+    async saveProfile() {
       if (!this.editedUser.name.trim()) {
-        alert('Tên không được để trống!')
-        return
+        alert('Tên không được để trống!');
+        return;
       }
 
-      const isChangingPassword = this.passwordForm.currentPassword || this.passwordForm.newPassword || this.passwordForm.confirmPassword
+      const isChangingPassword = Boolean(
+        this.passwordForm.currentPassword || 
+        this.passwordForm.newPassword || 
+        this.passwordForm.confirmPassword
+      );
 
       if (isChangingPassword) {
         if (!this.passwordForm.currentPassword) {
-          alert('Vui lòng nhập mật khẩu hiện tại!')
-          return
+          alert('Vui lòng nhập mật khẩu hiện tại!');
+          return;
         }
         if (!this.passwordForm.newPassword) {
-          alert('Vui lòng nhập mật khẩu mới!')
-          return
+          alert('Vui lòng nhập mật khẩu mới!');
+          return;
         }
         if (this.passwordForm.newPassword !== this.passwordForm.confirmPassword) {
-          alert('Mật khẩu xác nhận không khớp!')
-          return
+          alert('Mật khẩu xác nhận không khớp!');
+          return;
         }
       }
 
       const payload = {
-        name: this.editedUser.name
-      }
+        name: this.editedUser.name.trim()
+      };
 
       if (isChangingPassword) {
-        payload.currentPassword = this.passwordForm.currentPassword
-        payload.newPassword = this.passwordForm.newPassword
+        payload.currentPassword = this.passwordForm.currentPassword;
+        payload.newPassword = this.passwordForm.newPassword;
       }
 
-      this.$emit('update-user', payload)
-      this.isEditing = false
-      this.resetForm()
-      alert('✅ Cập nhật thông tin thành công!')
+      try {
+        this.saving = true;
+        const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+        
+        if (token) {
+          await axios.put('http://localhost:4000/api/auth/profile', payload, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+        }
+
+        this.currentUser.name = payload.name;
+        this.currentUser.username = payload.name;
+        localStorage.setItem('user', JSON.stringify(this.currentUser));
+
+        this.$emit('update-user', this.currentUser);
+        this.isEditing = false;
+        this.resetForm();
+        alert('✅ Cập nhật thông tin thành công!');
+      } catch (error) {
+        console.error('Lỗi khi cập nhật:', error);
+        alert(error.response?.data?.message || 'Có lỗi xảy ra khi lưu thông tin!');
+      } finally {
+        this.saving = false;
+      }
     }
   }
-}
+};
 </script>

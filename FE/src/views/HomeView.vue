@@ -34,7 +34,7 @@
             </p>
 
             <div class="flex flex-wrap gap-4">
-              <button @click="navigateToLearning" class="group bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-2xl hover:shadow-3xl transition-all transform hover:scale-105 flex items-center space-x-3 relative overflow-hidden">
+              <button @click="handleActionLearning" class="group bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-2xl hover:shadow-3xl transition-all transform hover:scale-105 flex items-center space-x-3 relative overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
                 <span>🚀</span>
                 <span>Học ngay</span>
@@ -107,7 +107,7 @@
                   </div>
                 </div>
 
-                <button @click="navigateToLearning" class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
+                <button @click="handleActionLearning" class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
                   Tiếp tục học →
                 </button>
               </div>
@@ -212,74 +212,11 @@
         </div>
 
         <div class="text-center mt-10">
-          <button @click="navigateToLearning" class="bg-white/70 backdrop-blur-xl text-gray-700 px-10 py-4 rounded-2xl font-bold shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 flex items-center space-x-2 border-2 border-white/50 hover:border-indigo-200 mx-auto">
+          <button @click="handleActionLearning" class="bg-white/70 backdrop-blur-xl text-gray-700 px-10 py-4 rounded-2xl font-bold shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 flex items-center space-x-2 border-2 border-white/50 hover:border-indigo-200 mx-auto">
             <span>📖</span>
             <span>Bắt đầu học ngay</span>
             <span>→</span>
           </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- Testimonials -->
-    <section class="relative z-10 py-20 bg-white/30 backdrop-blur-sm">
-      <div class="container mx-auto px-4 max-w-6xl">
-        <div class="text-center mb-12">
-          <h2 class="text-4xl font-bold text-gray-800 mb-4">💬 Học viên nói gì?</h2>
-        </div>
-
-        <div class="grid md:grid-cols-3 gap-8">
-          <div class="bg-white/60 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/50">
-            <div class="flex items-center space-x-4 mb-4">
-              <div class="w-12 h-12 bg-gradient-to-br from-indigo-400 to-purple-400 rounded-full flex items-center justify-center text-white font-bold">M</div>
-              <div>
-                <p class="font-bold text-gray-800">Minh Anh</p>
-                <div class="flex text-yellow-400 text-sm">⭐⭐⭐⭐⭐</div>
-              </div>
-            </div>
-            <p class="text-gray-600 text-sm">"Học được 3 tháng, từ vựng của mình cải thiện rõ rệt. Giao diện đẹp và dễ học!"</p>
-          </div>
-
-          <div class="bg-white/60 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/50">
-            <div class="flex items-center space-x-4 mb-4">
-              <div class="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white font-bold">T</div>
-              <div>
-                <p class="font-bold text-gray-800">Thanh Tùng</p>
-                <div class="flex text-yellow-400 text-sm">⭐⭐⭐⭐⭐</div>
-              </div>
-            </div>
-            <p class="text-gray-600 text-sm">"Phương pháp học thông minh, AI đề xuất từ vựng phù hợp với trình độ của tôi."</p>
-          </div>
-
-          <div class="bg-white/60 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/50">
-            <div class="flex items-center space-x-4 mb-4">
-              <div class="w-12 h-12 bg-gradient-to-br from-pink-400 to-rose-400 rounded-full flex items-center justify-center text-white font-bold">H</div>
-              <div>
-                <p class="font-bold text-gray-800">Hà My</p>
-                <div class="flex text-yellow-400 text-sm">⭐⭐⭐⭐⭐</div>
-              </div>
-            </div>
-            <p class="text-gray-600 text-sm">"Giao diện đẹp, tính năng game hóa khiến việc học trở nên thú vị hơn bao giờ hết!"</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="relative z-10 py-20">
-      <div class="container mx-auto px-4 max-w-4xl">
-        <div class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-3xl p-12 text-center text-white shadow-3xl relative overflow-hidden">
-          <div class="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
-          <div class="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2"></div>
-          
-          <div class="relative z-10">
-            <h2 class="text-4xl font-bold mb-4">Sẵn sàng chinh phục tiếng Anh?</h2>
-            <p class="text-white/80 text-lg mb-8 max-w-2xl mx-auto">Tham gia cùng hàng ngàn học viên khác và bắt đầu hành trình học tập của bạn ngay hôm nay</p>
-            <button @click="navigateToLearning" class="bg-white text-indigo-600 px-10 py-4 rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 hover:bg-indigo-50">
-              🚀 Bắt đầu ngay - Miễn phí
-            </button>
-            <p class="text-white/60 text-sm mt-4">Không cần thẻ tín dụng. Bắt đầu miễn phí ngay!</p>
-          </div>
         </div>
       </div>
     </section>
@@ -338,14 +275,22 @@ export default {
     Header
   },
   methods: {
-    navigateToLearning() {
-      // Chuyển hướng tới trang Dashboard (hoặc dùng this.$router.push({ name: 'Dashboard' }))
-      this.$router.push('/dashboard')
+    checkIsLoggedIn() {
+      const token = localStorage.getItem('token') || localStorage.getItem('access_token') || sessionStorage.getItem('token');
+      const user = localStorage.getItem('user');
+      return Boolean(token || user);
+    },
+    handleActionLearning() {
+      if (this.checkIsLoggedIn()) {
+        this.$router.push('/dashboard');
+      } else {
+        this.$router.push({ path: '/login', query: { redirect: '/dashboard' } });
+      }
     },
     scrollToRoadmap() {
-      const element = document.getElementById('roadmap')
+      const element = document.getElementById('roadmap');
       if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }
   }

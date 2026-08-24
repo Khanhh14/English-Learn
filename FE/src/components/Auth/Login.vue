@@ -195,7 +195,7 @@ export default {
     return {
       email: '',
       password: '',
-      rememberMe: false,
+      rememberMe: true,
       showPassword: false,
       isLoading: false,
       errorMessage: ''
@@ -224,14 +224,33 @@ export default {
         const data = await response.json()
 
         if (!response.ok) {
-          throw new Error(data.message || 'Đăng nhập thất bại!')
+          throw new Error(data.message || 'Email hoặc mật khẩu không chính xác!')
         }
 
-        const storage = this.rememberMe ? localStorage : sessionStorage
-        storage.setItem('token', data.token)
-        storage.setItem('user', JSON.stringify(data.user))
+        const rawUser = data.user || data.data?.user || data.data || {}
 
-        this.$router.push('/dashboard')
+        // Chuẩn hoá cấu trúc user trước khi lưu
+        const userObj = {
+          id: rawUser.id,
+          name: rawUser.name || rawUser.username || 'Người dùng',
+          username: rawUser.username || '',
+          email: rawUser.email || this.email,
+          role: rawUser.role || 'user',
+          streak: rawUser.streak || rawUser.streak_count || 0,
+          level: rawUser.level || 1,
+          points: rawUser.points || rawUser.xp || 0,
+          totalWords: rawUser.totalWords || rawUser.total_words || 0,
+          totalLessons: rawUser.totalLessons || rawUser.total_lessons || 0,
+          joinDate: rawUser.joinDate || rawUser.created_at || rawUser.createdAt || new Date().toISOString()
+        }
+
+        // Luôn lưu vào localStorage để Dashboard & ProfileTab luôn đọc được
+        localStorage.setItem('token', data.token)
+        localStorage.setItem('user', JSON.stringify(userObj))
+
+        // Điều hướng: nếu có query redirect thì ưu tiên, nếu không thì vào dashboard
+        const redirectPath = this.$route.query.redirect || '/dashboard'
+        this.$router.push(redirectPath)
       } catch (err) {
         this.errorMessage = err.message || 'Không thể kết nối đến máy chủ!'
       } finally {
