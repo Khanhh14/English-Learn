@@ -1,545 +1,576 @@
-<!-- src/components/Learning/LearningView.vue -->
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-blue-50 to-indigo-50">
+  <div class="min-h-screen bg-[#f8fafc] font-sans text-slate-800 antialiased selection:bg-indigo-500 selection:text-white pb-28">
     <!-- Header -->
-    <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-4">
-            <button @click="goBack" class="p-2 hover:bg-gray-100 rounded-xl transition-colors">
-              <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-              </svg>
-            </button>
-            <div>
-              <h1 class="text-xl font-bold text-gray-800">{{ effectiveDeckTitle }}</h1>
-              <p class="text-sm text-gray-500">{{ currentWords.length }} từ vựng</p>
-            </div>
+    <header class="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
+      <div class="mx-auto flex max-w-4xl items-center justify-between px-4 py-3.5 sm:px-6">
+        <div class="flex items-center gap-3">
+          <button 
+            @click="goBack" 
+            class="flex h-10 w-10 items-center justify-center rounded-2xl border-2 border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 active:translate-y-0.5"
+            title="Quay lại"
+          >
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <div>
+            <h1 class="text-base font-extrabold text-slate-800 sm:text-lg">{{ effectiveDeckTitle }}</h1>
+            <p class="text-xs font-semibold text-slate-400">{{ currentWords.length }} từ vựng & câu trong bộ</p>
           </div>
-          <div class="flex items-center gap-3">
-            <span class="text-sm bg-blue-100 text-blue-700 px-3 py-1.5 rounded-full font-medium">
-              ⭐ {{ score }} XP
-            </span>
-            <span class="text-sm bg-green-100 text-green-700 px-3 py-1.5 rounded-full font-medium">
-              🔥 {{ streak }} ngày
-            </span>
+        </div>
+
+        <!-- Badges -->
+        <div class="flex items-center gap-2">
+          <div class="flex items-center gap-1.5 rounded-2xl border-2 border-amber-200/80 bg-amber-50/80 px-3.5 py-1.5 text-xs font-black text-amber-700 shadow-xs sm:text-sm">
+            <span>⭐</span>
+            <span>{{ score }} <span class="text-[10px] font-bold uppercase sm:text-xs">XP</span></span>
+          </div>
+          <div class="flex items-center gap-1.5 rounded-2xl border-2 border-orange-200/80 bg-orange-50/80 px-3.5 py-1.5 text-xs font-black text-orange-700 shadow-xs sm:text-sm">
+            <span>🔥</span>
+            <span>{{ streak }} <span class="text-[10px] font-bold uppercase sm:text-xs">ngày</span></span>
           </div>
         </div>
       </div>
     </header>
 
-    <!-- Main Content -->
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      
-      <!-- Mode Selection Tabs -->
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-2 mb-8">
-        <div class="grid grid-cols-3 gap-1">
-          <button
-            v-for="mode in modes"
-            :key="mode.id"
-            @click="switchMode(mode.id)"
-            :class="[
-              'py-3 px-4 rounded-xl font-medium text-sm transition-all duration-200',
-              currentMode === mode.id 
-                ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' 
-                : 'text-gray-600 hover:bg-gray-50'
-            ]"
-          >
-            <span class="flex items-center justify-center gap-2">
-              <span>{{ mode.icon }}</span>
-              <span class="hidden sm:inline">{{ mode.label }}</span>
-            </span>
-          </button>
+    <main class="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
+      <!-- Loading State -->
+      <div v-if="loading" class="flex min-h-[380px] flex-col items-center justify-center rounded-3xl border-2 border-slate-100 bg-white p-8 shadow-sm">
+        <div class="relative flex items-center justify-center">
+          <div class="h-16 w-16 animate-spin rounded-full border-4 border-slate-100 border-t-indigo-600"></div>
+          <span class="absolute text-2xl">📚</span>
         </div>
+        <p class="mt-4 font-bold text-slate-400">Đang chuẩn bị bài học...</p>
       </div>
 
-      <!-- Mode Content -->
-      <div class="bg-white rounded-3xl shadow-xl border border-gray-100 p-6 sm:p-8">
-        
-        <!-- ============ MODE 1: Từ vựng - Chọn đáp án ============ -->
-        <div v-if="currentMode === 'vocab'" class="space-y-6">
-          <div class="flex items-center justify-between">
-            <h2 class="text-2xl font-bold text-gray-800">📚 Từ vựng - Chọn đáp án</h2>
-            <div class="flex items-center gap-4">
-              <span class="text-sm text-gray-500">
-                {{ vocabCurrentIndex + 1 }}/{{ vocabQuestions.length }}
-              </span>
-              <button @click="resetVocab" class="text-sm text-gray-500 hover:text-blue-600 transition-colors">
-                🔄 Làm lại
-              </button>
-            </div>
-          </div>
-
-          <!-- Progress -->
-          <div class="flex items-center gap-4">
-            <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div class="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full transition-all duration-700"
-                   :style="{ width: `${vocabProgress}%` }"></div>
-            </div>
-            <span class="text-sm font-medium text-gray-600 min-w-fit">
-              {{ vocabCorrectAnswers }}/{{ vocabQuestions.length }}
+      <!-- Exercise Area -->
+      <div v-else class="space-y-6">
+        <!-- Progress Bar Header -->
+        <div class="space-y-2.5">
+          <div class="flex items-center justify-between text-xs font-black tracking-wider uppercase">
+            <span class="rounded-xl bg-indigo-50 px-3 py-1 text-indigo-600 ring-1 ring-indigo-500/10">
+              {{ currentExercise?.typeLabel || 'Bài học' }}
             </span>
+            <span class="text-slate-400">Câu {{ currentStep + 1 }} / {{ lessonQueue.length }}</span>
           </div>
+          <div class="h-3.5 w-full overflow-hidden rounded-full bg-slate-200/70 p-0.5 shadow-inner">
+            <div 
+              class="h-full rounded-full bg-gradient-to-r from-indigo-500 via-sky-500 to-emerald-400 transition-all duration-500 ease-out" 
+              :style="{ width: `${progress}%` }"
+            ></div>
+          </div>
+        </div>
 
-          <!-- Question -->
-          <div v-if="!vocabCompleted" class="space-y-6">
-            <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-8 text-center border-2 border-blue-100">
-              <p class="text-sm text-gray-500 mb-2">Chọn đáp án đúng</p>
-              <h3 class="text-3xl md:text-4xl font-bold text-gray-800">
-                {{ vocabQuestions[vocabCurrentIndex]?.question }}
+        <!-- Finished Screen -->
+        <div v-if="isFinished" class="rounded-[32px] border-2 border-slate-100 bg-white p-8 text-center shadow-xl shadow-slate-200/50 sm:p-12">
+          <div class="mx-auto mb-5 flex h-24 w-24 items-center justify-center rounded-full bg-amber-50 text-5xl shadow-inner ring-8 ring-amber-50/50 animate-bounce">
+            🎉
+          </div>
+          <h2 class="text-3xl font-black text-slate-800">Hoàn thành bài học!</h2>
+          <p class="mt-2 text-base font-medium text-slate-500">
+            Bạn đã trả lời đúng <span class="font-extrabold text-emerald-600 text-lg">{{ totalCorrect }}</span> / {{ lessonQueue.length }} câu.
+          </p>
+          <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+            <button 
+              @click="resetLessonFlow" 
+              class="rounded-2xl border-b-4 border-indigo-800 bg-indigo-600 px-7 py-3.5 font-black text-white shadow-lg shadow-indigo-100 transition hover:bg-indigo-500 active:border-b-0 active:translate-y-1"
+            >
+              Làm lại bài học
+            </button>
+            <button 
+              @click="goBack" 
+              class="rounded-2xl border-2 border-b-4 border-slate-200 bg-white px-7 py-3.5 font-black text-slate-700 transition hover:bg-slate-50 active:border-b-2 active:translate-y-0.5"
+            >
+              Trở về danh sách
+            </button>
+          </div>
+        </div>
+
+        <!-- Question Body -->
+        <div v-else-if="currentExercise" class="rounded-[32px] border-2 border-slate-100 bg-white p-6 shadow-xl shadow-slate-100/80 sm:p-8">
+          <!-- Vocab & Listening -->
+          <div v-if="currentExercise.type === 'vocab' || currentExercise.type === 'listening'" class="space-y-6">
+            <div class="flex flex-col items-center justify-center rounded-2xl bg-gradient-to-b from-slate-50/80 to-slate-100/40 px-6 py-8 text-center border border-slate-100">
+              <span class="text-xs font-extrabold uppercase tracking-widest text-slate-400">
+                {{ currentExercise.type === 'listening' ? 'Luyện nghe phản xạ (Nghe và chọn đáp án)' : 'Chọn nghĩa tiếng Anh tương ứng' }}
+              </span>
+
+              <!-- Speaker Button: Listening Mode Only -->
+              <div v-if="currentExercise.type === 'listening'" class="my-6 flex flex-col items-center gap-3">
+                <button 
+                  @click="playPronunciation(currentExercise.audioTargetText, currentExercise.audioUrl)" 
+                  :class="[
+                    'group flex h-24 w-24 items-center justify-center rounded-3xl border-b-4 transition-all active:translate-y-1 active:border-b-0 shadow-md',
+                    isPlaying 
+                      ? 'border-indigo-800 bg-indigo-600 text-white animate-pulse' 
+                      : 'border-indigo-300 bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
+                  ]"
+                >
+                  <span class="text-4xl transition group-hover:scale-110">🔊</span>
+                </button>
+                <span class="text-xs font-bold text-indigo-600">Nhấn vào loa để nghe</span>
+              </div>
+
+              <!-- Question Prompt for Vocab Mode -->
+              <h3 v-else class="mt-4 text-2xl font-black text-slate-800 sm:text-3xl">
+                {{ currentExercise.prompt }}
               </h3>
-              <p class="text-sm text-gray-400 mt-2">
-                {{ vocabQuestions[vocabCurrentIndex]?.hint || 'Chọn 1 trong 4 đáp án' }}
-              </p>
             </div>
 
-            <!-- Options -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <!-- Options Grid -->
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <button
-                v-for="(option, idx) in vocabQuestions[vocabCurrentIndex]?.options || []"
+                v-for="(option, idx) in currentExercise.options"
                 :key="idx"
-                @click="selectVocabAnswer(idx)"
+                type="button"
+                @click="selectAnswer(idx)"
+                :disabled="showResult"
                 :class="[
-                  'px-6 py-4 rounded-xl border-2 transition-all font-medium text-left',
-                  vocabSelectedOption === idx && !vocabShowResult ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50',
-                  vocabShowResult && idx === vocabQuestions[vocabCurrentIndex]?.correct ? 'border-green-500 bg-green-50 text-green-700' : '',
-                  vocabShowResult && vocabSelectedOption === idx && idx !== vocabQuestions[vocabCurrentIndex]?.correct ? 'border-red-500 bg-red-50 text-red-700' : '',
-                  vocabShowResult && idx !== vocabQuestions[vocabCurrentIndex]?.correct ? 'opacity-60' : ''
+                  'group flex items-center gap-3.5 rounded-2xl border-2 border-b-4 p-4 text-left font-bold transition-all active:border-b-2 active:translate-y-0.5',
+                  !showResult && selectedAnswer !== idx ? 'border-slate-200 bg-white text-slate-700 hover:border-indigo-300 hover:bg-indigo-50/30' : '',
+                  selectedAnswer === idx && !showResult ? 'border-indigo-600 bg-indigo-50 text-indigo-900 border-b-indigo-700' : '',
+                  showResult && currentExercise.correct === idx ? 'border-emerald-500 bg-emerald-50 text-emerald-900 border-b-emerald-600' : '',
+                  showResult && selectedAnswer === idx && selectedAnswer !== currentExercise.correct ? 'border-rose-500 bg-rose-50 text-rose-900 border-b-rose-600' : '',
+                  showResult && selectedAnswer !== idx && currentExercise.correct !== idx ? 'opacity-40 border-slate-200 bg-slate-50 border-b-slate-200' : ''
                 ]"
-                :disabled="vocabShowResult"
               >
-                <span class="flex items-center gap-3">
-                  <span class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-600">
-                    {{ String.fromCharCode(65 + idx) }}
-                  </span>
-                  {{ option }}
+                <span :class="[
+                  'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-black transition-colors',
+                  showResult && currentExercise.correct === idx ? 'bg-emerald-500 text-white' : 
+                  showResult && selectedAnswer === idx ? 'bg-rose-500 text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-indigo-100 group-hover:text-indigo-700'
+                ]">
+                  {{ String.fromCharCode(65 + idx) }}
                 </span>
-              </button>
-            </div>
-
-            <!-- Result & Next -->
-            <div v-if="vocabShowResult" class="flex items-center justify-between gap-4">
-              <div class="flex items-center gap-3">
-                <span v-if="vocabQuestions[vocabCurrentIndex]?.isCorrect" class="text-green-600 font-semibold text-lg">
-                  ✅ Đúng rồi!
-                </span>
-                <span v-else class="text-red-600 font-semibold text-lg">
-                  ❌ Sai rồi! Đáp án đúng là: {{ vocabQuestions[vocabCurrentIndex]?.options[vocabQuestions[vocabCurrentIndex]?.correct] }}
-                </span>
-                <button @click="playPronunciation(vocabQuestions[vocabCurrentIndex]?.word)" 
-                        class="text-blue-500 hover:text-blue-600 transition-colors text-2xl">
-                  🔊
-                </button>
-              </div>
-              <button @click="nextVocabQuestion" 
-                      class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all font-medium shadow-lg shadow-blue-200">
-                {{ vocabCurrentIndex < vocabQuestions.length - 1 ? 'Câu tiếp theo →' : 'Xem kết quả' }}
+                <span class="flex-1 text-base">{{ option }}</span>
               </button>
             </div>
           </div>
 
-          <!-- Vocab Result -->
-          <div v-else class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-8 text-center border border-green-200">
-            <span class="text-6xl block mb-4">🎉</span>
-            <h3 class="text-2xl font-bold text-gray-800 mb-2">Hoàn thành!</h3>
-            <p class="text-gray-600 mb-4">
-              Bạn đã trả lời đúng <span class="font-bold text-green-600">{{ vocabCorrectAnswers }}</span> / {{ vocabQuestions.length }} câu
-            </p>
-            <div class="flex gap-4 justify-center flex-wrap">
-              <button @click="resetVocab" 
-                      class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all font-medium shadow-lg shadow-blue-200">
-                🔄 Làm lại
-              </button>
-              <button @click="switchMode('listening')" 
-                      class="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-all font-medium">
-                🎧 Luyện nghe tiếp
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- ============ MODE 2: Luyện nghe ============ -->
-        <div v-if="currentMode === 'listening'" class="space-y-6">
-          <div class="flex items-center justify-between">
-            <h2 class="text-2xl font-bold text-gray-800">🎧 Luyện nghe - Chọn đáp án</h2>
-            <div class="flex items-center gap-4">
-              <span class="text-sm text-gray-500">
-                {{ listenCurrentIndex + 1 }}/{{ listenQuestions.length }}
-              </span>
-              <button @click="resetListening" class="text-sm text-gray-500 hover:text-blue-600 transition-colors">
-                🔄 Làm lại
-              </button>
-            </div>
-          </div>
-
-          <!-- Progress -->
-          <div class="flex items-center gap-4">
-            <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div class="h-full bg-gradient-to-r from-purple-500 to-pink-600 rounded-full transition-all duration-700"
-                   :style="{ width: `${listenProgress}%` }"></div>
-            </div>
-            <span class="text-sm font-medium text-gray-600 min-w-fit">
-              {{ listenCorrectAnswers }}/{{ listenQuestions.length }}
-            </span>
-          </div>
-
-          <!-- Question -->
-          <div v-if="!listenCompleted" class="space-y-6">
-            <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-8 text-center border-2 border-purple-100">
-              <p class="text-sm text-gray-500 mb-2">👂 Nghe và chọn đáp án đúng</p>
-              <button @click="playListenAudio" 
-                      class="w-24 h-24 bg-purple-500 hover:bg-purple-600 text-white rounded-full flex items-center justify-center text-4xl transition-all shadow-lg shadow-purple-200 mx-auto mb-4 hover:scale-110">
-                {{ isListenPlaying ? '⏸️' : '🔊' }}
-              </button>
-              <p class="text-sm text-gray-400">Bấm vào loa để nghe</p>
-              <div class="mt-4 flex items-center justify-center gap-4">
-                <span class="text-sm bg-purple-100 text-purple-700 px-3 py-1 rounded-full font-medium">
-                  Đã nghe: {{ listenPlayCount }}/3
-                </span>
-              </div>
+          <!-- Sentence Ordering -->
+          <div v-else-if="currentExercise.type === 'sentence'" class="space-y-6">
+            <div class="rounded-2xl border border-indigo-100/70 bg-gradient-to-br from-indigo-50/50 via-sky-50/30 to-transparent p-5">
+              <span class="text-xs font-black uppercase tracking-widest text-indigo-500">Dịch câu sau:</span>
+              <h3 class="mt-1 text-xl font-extrabold text-slate-800 sm:text-2xl">
+                "{{ currentExercise.viPrompt }}"
+              </h3>
             </div>
 
-            <!-- Options -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <button
-                v-for="(option, idx) in listenQuestions[listenCurrentIndex]?.options || []"
-                :key="idx"
-                @click="selectListenAnswer(idx)"
-                :class="[
-                  'px-6 py-4 rounded-xl border-2 transition-all font-medium text-left',
-                  listenSelectedOption === idx && !listenShowResult ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-purple-300 hover:bg-gray-50',
-                  listenShowResult && idx === listenQuestions[listenCurrentIndex]?.correct ? 'border-green-500 bg-green-50 text-green-700' : '',
-                  listenShowResult && listenSelectedOption === idx && idx !== listenQuestions[listenCurrentIndex]?.correct ? 'border-red-500 bg-red-50 text-red-700' : '',
-                  listenShowResult && idx !== listenQuestions[listenCurrentIndex]?.correct ? 'opacity-60' : ''
-                ]"
-                :disabled="listenShowResult"
-              >
-                <span class="flex items-center gap-3">
-                  <span class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-600">
-                    {{ String.fromCharCode(65 + idx) }}
-                  </span>
-                  {{ option }}
-                </span>
-              </button>
-            </div>
-
-            <!-- Result & Next -->
-            <div v-if="listenShowResult" class="flex items-center justify-between gap-4">
-              <div class="flex items-center gap-3">
-                <span v-if="listenQuestions[listenCurrentIndex]?.isCorrect" class="text-green-600 font-semibold text-lg">
-                  ✅ Đúng rồi!
-                </span>
-                <span v-else class="text-red-600 font-semibold text-lg">
-                  ❌ Sai rồi! Đáp án đúng là: {{ listenQuestions[listenCurrentIndex]?.options[listenQuestions[listenCurrentIndex]?.correct] }}
-                </span>
-              </div>
-              <button @click="nextListenQuestion" 
-                      class="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-all font-medium shadow-lg shadow-purple-200">
-                {{ listenCurrentIndex < listenQuestions.length - 1 ? 'Câu tiếp theo →' : 'Xem kết quả' }}
-              </button>
-            </div>
-          </div>
-
-          <!-- Listen Result -->
-          <div v-else class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-8 text-center border border-purple-200">
-            <span class="text-6xl block mb-4">🎧</span>
-            <h3 class="text-2xl font-bold text-gray-800 mb-2">Hoàn thành luyện nghe!</h3>
-            <p class="text-gray-600 mb-4">
-              Bạn đã trả lời đúng <span class="font-bold text-purple-600">{{ listenCorrectAnswers }}</span> / {{ listenQuestions.length }} câu
-            </p>
-            <div class="flex gap-4 justify-center flex-wrap">
-              <button @click="resetListening" 
-                      class="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-all font-medium shadow-lg shadow-purple-200">
-                🔄 Làm lại
-              </button>
-              <button @click="switchMode('sentence')" 
-                      class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all font-medium">
-                ✍️ Luyện câu tiếp
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- ============ MODE 3: Luyện câu - Ghép từ ============ -->
-        <div v-if="currentMode === 'sentence'" class="space-y-6">
-          <div class="flex items-center justify-between">
-            <h2 class="text-2xl font-bold text-gray-800">✍️ Luyện câu - Ghép từ</h2>
-            <div class="flex items-center gap-4">
-              <span class="text-sm text-gray-500">
-                {{ sentenceCurrentIndex + 1 }}/{{ sentenceQuestions.length }}
-              </span>
-              <button @click="resetSentence" class="text-sm text-gray-500 hover:text-blue-600 transition-colors">
-                🔄 Làm lại
-              </button>
-            </div>
-          </div>
-
-          <!-- Progress -->
-          <div class="flex items-center gap-4">
-            <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div class="h-full bg-gradient-to-r from-green-500 to-emerald-600 rounded-full transition-all duration-700"
-                   :style="{ width: `${sentenceProgress}%` }"></div>
-            </div>
-            <span class="text-sm font-medium text-gray-600 min-w-fit">
-              {{ sentenceCompleted }}/{{ sentenceQuestions.length }}
-            </span>
-          </div>
-
-          <!-- Question -->
-          <div v-if="!sentenceAllCompleted" class="space-y-6">
-            <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border-2 border-green-100">
-              <p class="text-sm text-gray-500 mb-2">🔀 Ghép các từ thành câu hoàn chỉnh</p>
-              <p class="text-lg font-medium text-gray-700 mb-4">
-                {{ sentenceQuestions[sentenceCurrentIndex]?.question }}
-              </p>
-
-              <!-- Word Bank -->
-              <div class="flex flex-wrap gap-2 mb-4 p-4 bg-white rounded-xl min-h-[60px] border-2 border-dashed border-gray-300">
-                <span
-                  v-for="(word, idx) in sentenceQuestions[sentenceCurrentIndex]?.availableWords || []"
-                  :key="'avail-' + idx"
-                  @click="selectWord(idx)"
-                  class="px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg cursor-pointer transition-all text-sm font-medium hover:scale-105"
+            <!-- Target Slot Area -->
+            <div class="min-h-[110px] rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/60 p-4 transition-colors">
+              <div class="flex flex-wrap gap-2.5">
+                <button 
+                  v-for="(word, index) in currentExercise.selectedWords" 
+                  :key="`${word}-${index}`" 
+                  @click="removeSentenceWord(index)" 
+                  type="button" 
+                  :disabled="currentExercise.showResult"
+                  class="rounded-xl border-2 border-b-4 border-indigo-700 bg-indigo-600 px-4 py-2.5 text-sm font-extrabold text-white shadow-sm transition hover:bg-indigo-500 active:border-b-2 active:translate-y-0.5"
                 >
                   {{ word }}
-                </span>
-              </div>
-
-              <!-- Selected Words -->
-              <div class="flex flex-wrap gap-2 p-4 bg-white rounded-xl min-h-[60px] border-2 border-green-300">
-                <span
-                  v-for="(word, idx) in sentenceQuestions[sentenceCurrentIndex]?.selectedWords || []"
-                  :key="'sel-' + idx"
-                  @click="removeWord(idx)"
-                  class="px-4 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg cursor-pointer transition-all text-sm font-medium hover:scale-105"
-                >
-                  {{ word }}
-                  <span class="text-xs ml-1">✕</span>
-                </span>
-                <span v-if="sentenceQuestions[sentenceCurrentIndex]?.selectedWords?.length === 0" 
-                      class="text-gray-400 text-sm">
-                  Bấm vào từ ở trên để ghép câu...
-                </span>
-              </div>
-            </div>
-
-            <!-- Actions -->
-            <div class="flex items-center justify-between gap-4">
-              <div class="flex gap-2">
-                <button @click="clearSentenceSelection" 
-                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-all text-sm font-medium">
-                  🗑️ Xóa hết
                 </button>
-                <button @click="shuffleSentenceWords" 
-                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-all text-sm font-medium">
-                  🔀 Xáo trộn
-                </button>
-              </div>
-              <button @click="checkSentence" 
-                      class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all font-medium shadow-lg shadow-green-200">
-                ✅ Kiểm tra
-              </button>
-            </div>
-
-            <!-- Result -->
-            <div v-if="sentenceQuestions[sentenceCurrentIndex]?.showResult" 
-                 class="p-4 rounded-xl" 
-                 :class="sentenceQuestions[sentenceCurrentIndex]?.isCorrect ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'">
-              <div class="flex items-center justify-between">
-                <div>
-                  <span v-if="sentenceQuestions[sentenceCurrentIndex]?.isCorrect" class="text-green-600 font-semibold">
-                    ✅ Đúng rồi! Câu hoàn chỉnh: 
-                  </span>
-                  <span v-else class="text-red-600 font-semibold">
-                    ❌ Câu đúng là: 
-                  </span>
-                  <span class="font-bold text-gray-800">
-                    {{ sentenceQuestions[sentenceCurrentIndex]?.correctAnswer }}
-                  </span>
+                <div v-if="!currentExercise.selectedWords.length" class="flex h-16 w-full items-center justify-center text-sm font-bold text-slate-400">
+                  Nhấp vào các từ bên dưới để ghép câu hoàn chỉnh
                 </div>
-                <button @click="playPronunciation(sentenceQuestions[sentenceCurrentIndex]?.correctAnswer)" 
-                        class="text-blue-500 hover:text-blue-600 transition-colors text-2xl">
-                  🔊
-                </button>
               </div>
-              <button v-if="sentenceQuestions[sentenceCurrentIndex]?.showResult" 
-                      @click="nextSentenceQuestion"
-                      class="mt-3 w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all font-medium shadow-lg shadow-blue-200">
-                {{ sentenceCurrentIndex < sentenceQuestions.length - 1 ? 'Câu tiếp theo →' : 'Xem kết quả' }}
+            </div>
+
+            <!-- Word Bank -->
+            <div class="flex min-h-[70px] flex-wrap justify-center gap-2.5 py-2">
+              <button 
+                v-for="(word, index) in currentExercise.availableWords" 
+                :key="`${word}-${index}`" 
+                @click="selectSentenceWord(index)" 
+                type="button" 
+                :disabled="currentExercise.showResult"
+                class="rounded-xl border-2 border-b-4 border-slate-200 bg-white px-4 py-2.5 text-sm font-extrabold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 active:border-b-2 active:translate-y-0.5"
+              >
+                {{ word }}
               </button>
             </div>
-          </div>
 
-          <!-- Sentence Result -->
-          <div v-else class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-8 text-center border border-green-200">
-            <span class="text-6xl block mb-4">✍️</span>
-            <h3 class="text-2xl font-bold text-gray-800 mb-2">Hoàn thành luyện câu!</h3>
-            <p class="text-gray-600 mb-4">
-              Bạn đã hoàn thành <span class="font-bold text-green-600">{{ sentenceCompleted }}</span> / {{ sentenceQuestions.length }} câu
-            </p>
-            <div class="flex gap-4 justify-center flex-wrap">
-              <button @click="resetSentence" 
-                      class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all font-medium shadow-lg shadow-green-200">
-                🔄 Làm lại
-              </button>
-              <button @click="switchMode('vocab')" 
-                      class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all font-medium">
-                📚 Về từ vựng
+            <!-- Single Check Button -->
+            <div v-if="!currentExercise.showResult" class="pt-2">
+              <button 
+                @click="checkSentenceAnswer" 
+                :disabled="!currentExercise.selectedWords.length"
+                class="w-full rounded-2xl border-b-4 border-indigo-800 bg-indigo-600 py-3.5 text-center font-black text-white shadow-lg shadow-indigo-100 transition hover:bg-indigo-500 active:border-b-0 active:translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:border-b-0"
+              >
+                Kiểm tra đáp án
               </button>
             </div>
           </div>
         </div>
-
       </div>
-    </div>
+    </main>
+
+    <!-- Bottom Result Feedback Bar -->
+    <footer 
+      v-if="showResult || (currentExercise && currentExercise.showResult)" 
+      :class="[
+        'fixed bottom-0 left-0 right-0 z-50 border-t-2 bg-white/95 px-4 py-4 shadow-2xl backdrop-blur-md transition-all sm:px-8',
+        (isCorrectAnswer || (currentExercise && currentExercise.isCorrect)) 
+          ? 'border-emerald-200 bg-emerald-50/90 text-emerald-950' 
+          : 'border-rose-200 bg-rose-50/90 text-rose-950'
+      ]"
+    >
+      <div class="mx-auto flex max-w-3xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex items-center gap-3">
+          <div :class="[
+            'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-2xl',
+            (isCorrectAnswer || (currentExercise && currentExercise.isCorrect)) ? 'bg-emerald-100' : 'bg-rose-100'
+          ]">
+            {{ (isCorrectAnswer || (currentExercise && currentExercise.isCorrect)) ? '🎉' : '💡' }}
+          </div>
+          <div>
+            <h4 class="text-lg font-black">
+              {{ (isCorrectAnswer || (currentExercise && currentExercise.isCorrect)) ? 'Chính xác! Làm rất tốt.' : 'Chưa đúng rồi!' }}
+            </h4>
+            <p v-if="!(isCorrectAnswer || (currentExercise && currentExercise.isCorrect))" class="text-xs font-semibold sm:text-sm text-rose-800">
+              Đáp án đúng là: <span class="font-bold underline">{{ currentExercise.type === 'sentence' ? currentExercise.correctAnswer : currentExercise.options[currentExercise.correct] }}</span>
+            </p>
+          </div>
+        </div>
+
+        <button 
+          @click="nextExercise" 
+          :class="[
+            'rounded-2xl border-b-4 px-8 py-3 text-center text-sm font-black text-white shadow-md transition active:border-b-0 active:translate-y-1 sm:w-auto',
+            (isCorrectAnswer || (currentExercise && currentExercise.isCorrect)) 
+              ? 'border-emerald-700 bg-emerald-600 hover:bg-emerald-500' 
+              : 'border-rose-700 bg-rose-600 hover:bg-rose-500'
+          ]"
+        >
+          {{ currentStep < lessonQueue.length - 1 ? 'Tiếp tục →' : 'Xem tổng kết' }}
+        </button>
+      </div>
+    </footer>
   </div>
 </template>
 
 <script>
 import axios from 'axios';
 
+// Dữ liệu chuẩn theo 6 bộ deck (Deck 4 -> 9)
+const DECK_FALLBACKS = {
+  4: {
+    title: 'Gia đình',
+    words: [
+      { id: 1, term: 'family', vietnamese_meaning: 'gia đình' },
+      { id: 2, term: 'mother', vietnamese_meaning: 'mẹ' },
+      { id: 3, term: 'father', vietnamese_meaning: 'bố, cha' },
+      { id: 4, term: 'sister', vietnamese_meaning: 'chị/em gái' },
+      { id: 5, term: 'brother', vietnamese_meaning: 'anh/em trai' },
+      { id: 19, term: 'grandfather', vietnamese_meaning: 'ông' },
+      { id: 20, term: 'grandmother', vietnamese_meaning: 'bà' }
+    ],
+    sentences: [
+      { id: 1, english: 'I love my family.', vietnamese: 'Tôi yêu gia đình của tôi.' },
+      { id: 2, english: 'My mother is a teacher.', vietnamese: 'Mẹ tôi là một giáo viên.' },
+      { id: 4, english: 'She has a younger sister.', vietnamese: 'Cô ấy có một người em gái.' }
+    ]
+  },
+  5: {
+    title: 'Màu sắc',
+    words: [
+      { id: 6, term: 'red', vietnamese_meaning: 'màu đỏ' },
+      { id: 7, term: 'blue', vietnamese_meaning: 'màu xanh da trời' },
+      { id: 8, term: 'green', vietnamese_meaning: 'màu xanh lá cây' },
+      { id: 9, term: 'yellow', vietnamese_meaning: 'màu vàng' },
+      { id: 24, term: 'black', vietnamese_meaning: 'màu đen' },
+      { id: 25, term: 'white', vietnamese_meaning: 'màu trắng' }
+    ],
+    sentences: [
+      { id: 3, english: 'His father drives a blue car.', vietnamese: 'Bố của anh ấy lái một chiếc xe màu xanh.' },
+      { id: 5, english: 'The red apple is very sweet.', vietnamese: 'Quả táo màu đỏ rất ngọt.' },
+      { id: 10, english: 'The night sky is completely black.', vietnamese: 'Bầu trời đêm hoàn toàn là màu đen.' }
+    ]
+  },
+  6: {
+    title: 'Động vật',
+    words: [
+      { id: 10, term: 'dog', vietnamese_meaning: 'con chó' },
+      { id: 11, term: 'cat', vietnamese_meaning: 'con mèo' },
+      { id: 12, term: 'lion', vietnamese_meaning: 'con sư tử' },
+      { id: 13, term: 'tiger', vietnamese_meaning: 'con hổ' },
+      { id: 29, term: 'elephant', vietnamese_meaning: 'con voi' },
+      { id: 30, term: 'monkey', vietnamese_meaning: 'con khỉ' }
+    ],
+    sentences: [
+      { id: 14, english: 'The elephant is the largest land animal.', vietnamese: 'Con voi là loài động vật trên cạn lớn nhất.' },
+      { id: 15, english: 'A monkey is climbing the tall tree.', vietnamese: 'Một con khỉ đang leo trèo trên cái cây cao.' }
+    ]
+  },
+  7: {
+    title: 'Thức ăn',
+    words: [
+      { id: 14, term: 'bread', vietnamese_meaning: 'bánh mì' },
+      { id: 15, term: 'rice', vietnamese_meaning: 'cơm, gạo' },
+      { id: 16, term: 'water', vietnamese_meaning: 'nước' },
+      { id: 17, term: 'coffee', vietnamese_meaning: 'cà phê' },
+      { id: 34, term: 'noodles', vietnamese_meaning: 'mì, bún, phở' },
+      { id: 35, term: 'meat', vietnamese_meaning: 'thịt' }
+    ],
+    sentences: [
+      { id: 18, english: 'I usually have a bowl of noodles for breakfast.', vietnamese: 'Tôi thường ăn một bát mì vào bữa sáng.' },
+      { id: 19, english: 'He does not eat red meat.', vietnamese: 'Anh ấy không ăn thịt đỏ.' }
+    ]
+  },
+  8: {
+    title: 'Công việc',
+    words: [
+      { id: 39, term: 'doctor', vietnamese_meaning: 'bác sĩ' },
+      { id: 40, term: 'teacher', vietnamese_meaning: 'giáo viên' },
+      { id: 41, term: 'engineer', vietnamese_meaning: 'kỹ sư' },
+      { id: 42, term: 'developer', vietnamese_meaning: 'lập trình viên' },
+      { id: 43, term: 'nurse', vietnamese_meaning: 'y tá' }
+    ],
+    sentences: [
+      { id: 22, english: 'The doctor examined the patient carefully.', vietnamese: 'Bác sĩ đã khám cho bệnh nhân rất cẩn thận.' },
+      { id: 23, english: 'She wants to become a software engineer.', vietnamese: 'Cô ấy muốn trở thành một kỹ sư phần mềm.' }
+    ]
+  },
+  9: {
+    title: 'Cảm xúc',
+    words: [
+      { id: 44, term: 'happy', vietnamese_meaning: 'vui vẻ, hạnh phúc' },
+      { id: 45, term: 'sad', vietnamese_meaning: 'buồn bã' },
+      { id: 46, term: 'angry', vietnamese_meaning: 'tức giận' },
+      { id: 47, term: 'tired', vietnamese_meaning: 'mệt mỏi' },
+      { id: 48, term: 'excited', vietnamese_meaning: 'hào hứng, phấn khích' }
+    ],
+    sentences: [
+      { id: 26, english: 'They felt very happy after finishing the project.', vietnamese: 'Họ cảm thấy rất vui vẻ sau khi hoàn thành dự án.' },
+      { id: 27, english: 'I am feeling so tired after a long day of work.', vietnamese: 'Tôi đang cảm thấy rất mệt mỏi sau một ngày làm việc dài.' }
+    ]
+  }
+};
+
 export default {
   name: 'LearningView',
   props: {
-    deckId: {
-      type: [String, Number],
-      required: true
-    },
-    deckTitle: {
-      type: String,
-      default: 'Bài học'
-    }
+    deckId: { type: [Number, String], default: null },
+    deckTitle: { type: String, default: 'Bài học' },
+    streak: { type: Number, default: 3 }
   },
   data() {
     return {
-      // Data
       currentWords: [],
+      currentSentences: [],
       score: 0,
-      streak: 3,
-      
-      // Modes
-      currentMode: 'vocab',
-      modes: [
-        { id: 'vocab', label: 'Từ vựng', icon: '📚' },
-        { id: 'listening', label: 'Luyện nghe', icon: '🎧' },
-        { id: 'sentence', label: 'Luyện câu', icon: '✍️' }
-      ],
-      
-      // ===== VOCAB =====
-      vocabQuestions: [],
-      vocabCurrentIndex: 0,
-      vocabSelectedOption: null,
-      vocabShowResult: false,
-      vocabCorrectAnswers: 0,
-      vocabCompleted: false,
-      
-      // ===== LISTENING =====
-      listenQuestions: [],
-      listenCurrentIndex: 0,
-      listenSelectedOption: null,
-      listenShowResult: false,
-      listenCorrectAnswers: 0,
-      listenCompleted: false,
-      listenPlayCount: 0,
-      isListenPlaying: false,
-      
-      // ===== SENTENCE =====
-      sentenceQuestions: [],
-      sentenceCurrentIndex: 0,
-      sentenceCompleted: 0,
-      sentenceAllCompleted: false,
-      
-      loading: false
+      loading: true,
+      lessonQueue: [],
+      currentStep: 0,
+      selectedAnswer: null,
+      showResult: false,
+      totalCorrect: 0,
+      isPlaying: false,
+      isFinished: false
     };
   },
   computed: {
-    vocabProgress() {
-      if (this.vocabQuestions.length === 0) return 0;
-      return Math.round((this.vocabCorrectAnswers / this.vocabQuestions.length) * 100);
+    currentExercise() {
+      return this.lessonQueue[this.currentStep] || null;
     },
-    listenProgress() {
-      if (this.listenQuestions.length === 0) return 0;
-      return Math.round((this.listenCorrectAnswers / this.listenQuestions.length) * 100);
+    progress() {
+      if (!this.lessonQueue.length) return 0;
+      return ((this.currentStep + 1) / this.lessonQueue.length) * 100;
     },
-    sentenceProgress() {
-      if (this.sentenceQuestions.length === 0) return 0;
-      return Math.round((this.sentenceCompleted / this.sentenceQuestions.length) * 100);
+    isCorrectAnswer() {
+      if (!this.currentExercise) return false;
+      return this.selectedAnswer === this.currentExercise.correct;
+    },
+    resolvedDeckId() {
+      return Number(this.deckId || (this.$route && this.$route.query && this.$route.query.deckId) || 4);
     },
     effectiveDeckTitle() {
-      // Prefer explicit query param deckTitle, otherwise use the prop
-      return (this.$route && this.$route.query && this.$route.query.deckTitle) || this.deckTitle || 'Bài học';
+      if (this.$route && this.$route.query && this.$route.query.deckTitle) {
+        return this.$route.query.deckTitle;
+      }
+      return DECK_FALLBACKS[this.resolvedDeckId]?.title || this.deckTitle || 'Bài học';
     }
   },
-
   mounted() {
-    // If a mode is provided via the route query (e.g. ?mode=listening), apply it before fetching data
-    const qMode = this.$route && this.$route.query && this.$route.query.mode;
-    if (qMode && ['vocab', 'listening', 'sentence'].includes(qMode)) {
-      this.currentMode = qMode;
-    }
-
     this.fetchData();
   },
-
-  beforeUnmount() {
-    // Cleanup
-  },
   methods: {
-    // ============ FETCH DATA ============
     async fetchData() {
       try {
         this.loading = true;
-        const res = await axios.get(`http://localhost:4000/api/vocab/decks/${this.deckId}/words`);
-        this.currentWords = res.data.data || [];
-        
-        this.generateVocabQuestions();
-        this.generateListenQuestions();
-        this.generateSentenceQuestions();
-        
+        const deckId = this.resolvedDeckId;
+
+        // 1. Lấy từ vựng theo deck
+        try {
+          const wordsRes = await axios.get(`http://localhost:4000/api/vocab/decks/${deckId}/words`);
+          const apiWords = wordsRes.data?.data || wordsRes.data || [];
+          if (Array.isArray(apiWords) && apiWords.length > 0) {
+            this.currentWords = apiWords.map((word) => ({
+              id: word.id,
+              term: word.term,
+              vietnamese_meaning: word.vietnamese_meaning || word.definition || word.meaning || word.term,
+              audio_url: word.audio_url || null
+            }));
+          }
+        } catch {
+          console.warn('Không tải được words từ API, sử dụng dữ liệu fallback theo Deck ID.');
+        }
+
+        // 2. Lấy câu luyện tập theo deck
+        try {
+          const sentencesRes = await axios.get(`http://localhost:4000/api/vocab/decks/${deckId}/sentences`);
+          const apiSentences = sentencesRes.data?.data || sentencesRes.data || [];
+          if (Array.isArray(apiSentences) && apiSentences.length > 0) {
+            this.currentSentences = apiSentences;
+          }
+        } catch {
+          console.warn('Không tải được sentences từ API, sử dụng dữ liệu fallback theo Deck ID.');
+        }
+
+        // 3. Sử dụng fallback tương ứng theo Deck nếu API rỗng
+        const defaultDeckData = DECK_FALLBACKS[deckId] || DECK_FALLBACKS[4];
+        if (!this.currentWords.length) {
+          this.currentWords = [...defaultDeckData.words];
+        }
+        if (!this.currentSentences.length) {
+          this.currentSentences = [...defaultDeckData.sentences];
+        }
+
+        this.generateLessonFlow();
       } catch (error) {
-        console.error('Lỗi tải dữ liệu:', error);
-        // Mock data for demo
-        this.currentWords = [
-          { id: 1, term: 'father', definition: 'bố' },
-          { id: 2, term: 'mother', definition: 'mẹ' },
-          { id: 3, term: 'brother', definition: 'anh trai' },
-          { id: 4, term: 'sister', definition: 'chị gái' },
-          { id: 5, term: 'grandfather', definition: 'ông' },
-          { id: 6, term: 'grandmother', definition: 'bà' }
-        ];
-        this.generateVocabQuestions();
-        this.generateListenQuestions();
-        this.generateSentenceQuestions();
+        console.error('Lỗi khi nạp dữ liệu bài học:', error);
+        this.generateLessonFlow();
       } finally {
         this.loading = false;
       }
     },
 
-    // ============ NAVIGATION ============
+    generateLessonFlow() {
+      const words = [...this.currentWords].slice(0, 6);
+      const queue = [];
+
+      while (words.length) {
+        const typePool = ['vocab', 'listening'];
+        const chosenType = typePool[Math.floor(Math.random() * typePool.length)];
+        const randomIndex = Math.floor(Math.random() * words.length);
+        const word = words[randomIndex];
+        queue.push(this.buildQuestionCard(chosenType, word));
+        words.splice(randomIndex, 1);
+      }
+
+      const sentenceQuestions = this.generateSentenceQuestions();
+      queue.push(...sentenceQuestions.map((sentence) => ({
+        type: 'sentence',
+        typeLabel: 'Luyện câu',
+        ...sentence
+      })));
+
+      this.lessonQueue = queue;
+      this.currentStep = 0;
+      this.selectedAnswer = null;
+      this.showResult = false;
+      this.isFinished = false;
+      this.totalCorrect = 0;
+      this.score = 0;
+    },
+
+    buildQuestionCard(type, word) {
+      const prompt = word.vietnamese_meaning || word.term;
+      const correctWord = word.term;
+      const distractors = this.currentWords
+        .filter((candidate) => candidate.term !== correctWord)
+        .map((candidate) => candidate.term)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 3);
+
+      const options = [correctWord, ...distractors].sort(() => Math.random() - 0.5);
+
+      return {
+        type,
+        typeLabel: type === 'vocab' ? 'Từ vựng' : 'Luyện nghe',
+        word,
+        audioTargetText: correctWord,
+        audioUrl: word.audio_url || null,
+        prompt: type === 'listening' ? '' : prompt,
+        correct: options.indexOf(correctWord),
+        options,
+        isCorrect: false,
+        showResult: false,
+        selectedAnswer: null
+      };
+    },
+
+    generateSentenceQuestions() {
+      const sentences = this.currentSentences.slice(0, 3);
+
+      return sentences.map((item) => {
+        const cleanEnglish = (item.english || '').trim().replace(/[.?!]$/, '');
+        const wordList = cleanEnglish.split(/\s+/).filter(Boolean);
+
+        return {
+          viPrompt: item.vietnamese || '',
+          correctAnswer: cleanEnglish,
+          availableWords: [...wordList].sort(() => Math.random() - 0.5),
+          selectedWords: [],
+          showResult: false,
+          isCorrect: false
+        };
+      });
+    },
+
+    selectAnswer(index) {
+      if (this.showResult) return;
+      this.selectedAnswer = index;
+      this.showResult = true;
+
+      const exercise = this.currentExercise;
+      if (exercise && index === exercise.correct) {
+        exercise.isCorrect = true;
+        this.totalCorrect += 1;
+        this.score += 10;
+      }
+    },
+
+    nextExercise() {
+      if (this.currentStep < this.lessonQueue.length - 1) {
+        this.currentStep += 1;
+        this.selectedAnswer = null;
+        this.showResult = false;
+        return;
+      }
+
+      this.isFinished = true;
+    },
+
+    resetLessonFlow() {
+      this.currentStep = 0;
+      this.selectedAnswer = null;
+      this.showResult = false;
+      this.totalCorrect = 0;
+      this.score = 0;
+      this.isFinished = false;
+      this.generateLessonFlow();
+    },
+
     goBack() {
-      this.$router.back();
+      this.$router ? this.$router.back() : window.history.back();
     },
 
-    switchMode(mode) {
-      this.currentMode = mode;
-    },
+    async playPronunciation(text, audioUrl = null) {
+      if (!text && !audioUrl) return;
+      this.isPlaying = true;
 
-    // ============ PRONUNCIATION ============
-    async playPronunciation(text) {
-      if (!text) return;
       try {
-        const res = await axios.get(`http://localhost:4000/api/vocab/word/${text.split(' ')[0]}`);
-        const wordData = res.data?.data;
-        const hasAudioUrl = wordData?.audio_url && typeof wordData.audio_url === 'string' && wordData.audio_url.trim().length > 0;
-
-        if (hasAudioUrl) {
-          const audio = new Audio(wordData.audio_url);
-          audio.play().catch(() => this.speakWithBrowser(text));
+        if (audioUrl && typeof audioUrl === 'string' && audioUrl.trim().length > 0) {
+          const audio = new Audio(audioUrl);
+          await audio.play();
         } else {
           this.speakWithBrowser(text);
         }
-      } catch (error) {
+      } catch {
         this.speakWithBrowser(text);
+      } finally {
+        setTimeout(() => {
+          this.isPlaying = false;
+        }, 1000);
       }
     },
 
@@ -553,282 +584,35 @@ export default {
       }
     },
 
-    // ============ VOCAB ============
-    generateVocabQuestions() {
-      this.vocabQuestions = this.currentWords.map(word => {
-        const isEnglish = Math.random() > 0.5;
-        const question = isEnglish ? word.term : word.definition;
-        const correctAnswer = isEnglish ? word.definition : word.term;
-        
-        // Generate wrong options
-        const otherWords = this.currentWords.filter(w => w.id !== word.id);
-        const shuffled = otherWords.sort(() => Math.random() - 0.5).slice(0, 3);
-        const wrongOptions = shuffled.map(w => isEnglish ? w.definition : w.term);
-        
-        const options = [correctAnswer, ...wrongOptions];
-        // Shuffle options
-        for (let i = options.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [options[i], options[j]] = [options[j], options[i]];
-        }
-        
-        return {
-          word: word.term,
-          question: question,
-          options: options,
-          correct: options.indexOf(correctAnswer),
-          isCorrect: false,
-          hint: isEnglish ? 'Chọn nghĩa tiếng Việt' : 'Chọn nghĩa tiếng Anh'
-        };
-      });
+    selectSentenceWord(index) {
+      const exercise = this.currentExercise;
+      if (!exercise || exercise.type !== 'sentence' || exercise.showResult) return;
+      const selectedWord = exercise.availableWords[index];
+      if (!selectedWord) return;
+      exercise.availableWords.splice(index, 1);
+      exercise.selectedWords.push(selectedWord);
     },
 
-    selectVocabAnswer(index) {
-      if (this.vocabShowResult) return;
-      
-      this.vocabSelectedOption = index;
-      this.vocabShowResult = true;
-      
-      const question = this.vocabQuestions[this.vocabCurrentIndex];
-      if (index === question.correct) {
-        question.isCorrect = true;
-        this.vocabCorrectAnswers++;
-        this.score += 10;
-      }
+    removeSentenceWord(index) {
+      const exercise = this.currentExercise;
+      if (!exercise || exercise.type !== 'sentence' || exercise.showResult) return;
+      const word = exercise.selectedWords[index];
+      if (!word) return;
+      exercise.selectedWords.splice(index, 1);
+      exercise.availableWords.push(word);
     },
 
-    nextVocabQuestion() {
-      if (this.vocabCurrentIndex < this.vocabQuestions.length - 1) {
-        this.vocabCurrentIndex++;
-        this.vocabSelectedOption = null;
-        this.vocabShowResult = false;
-      } else {
-        this.vocabCompleted = true;
-      }
-    },
-
-    resetVocab() {
-      this.vocabCurrentIndex = 0;
-      this.vocabSelectedOption = null;
-      this.vocabShowResult = false;
-      this.vocabCorrectAnswers = 0;
-      this.vocabCompleted = false;
-      this.generateVocabQuestions();
-    },
-
-    // ============ LISTENING ============
-    generateListenQuestions() {
-      this.listenQuestions = this.currentWords.map(word => {
-        const options = [word.term];
-        const otherWords = this.currentWords.filter(w => w.id !== word.id);
-        const shuffled = otherWords.sort(() => Math.random() - 0.5).slice(0, 3);
-        options.push(...shuffled.map(w => w.term));
-        
-        // Shuffle options
-        for (let i = options.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [options[i], options[j]] = [options[j], options[i]];
-        }
-        
-        return {
-          word: word.term,
-          definition: word.definition,
-          options: options,
-          correct: options.indexOf(word.term),
-          isCorrect: false
-        };
-      });
-    },
-
-    playListenAudio() {
-      const question = this.listenQuestions[this.listenCurrentIndex];
-      if (!question) return;
-      
-      this.isListenPlaying = true;
-      this.listenPlayCount++;
-      this.playPronunciation(question.word);
-      setTimeout(() => {
-        this.isListenPlaying = false;
-      }, 3000);
-    },
-
-    selectListenAnswer(index) {
-      if (this.listenShowResult) return;
-      
-      this.listenSelectedOption = index;
-      this.listenShowResult = true;
-      
-      const question = this.listenQuestions[this.listenCurrentIndex];
-      if (index === question.correct) {
-        question.isCorrect = true;
-        this.listenCorrectAnswers++;
-        this.score += 10;
-      }
-    },
-
-    nextListenQuestion() {
-      if (this.listenCurrentIndex < this.listenQuestions.length - 1) {
-        this.listenCurrentIndex++;
-        this.listenSelectedOption = null;
-        this.listenShowResult = false;
-        this.listenPlayCount = 0;
-      } else {
-        this.listenCompleted = true;
-      }
-    },
-
-    resetListening() {
-      this.listenCurrentIndex = 0;
-      this.listenSelectedOption = null;
-      this.listenShowResult = false;
-      this.listenCorrectAnswers = 0;
-      this.listenCompleted = false;
-      this.listenPlayCount = 0;
-      this.generateListenQuestions();
-    },
-
-    // ============ SENTENCE ============
-    generateSentenceQuestions() {
-      const sentences = [
-        { vi: 'Tôi yêu gia đình của tôi', en: 'I love my family' },
-        { vi: 'Mẹ tôi nấu ăn rất ngon', en: 'My mother cooks very well' },
-        { vi: 'Anh trai tôi thích đá bóng', en: 'My brother likes playing soccer' },
-        { vi: 'Em gái tôi học giỏi', en: 'My sister studies well' },
-        { vi: 'Ông bà tôi sống ở nông thôn', en: 'My grandparents live in the countryside' }
-      ];
-
-      this.sentenceQuestions = sentences.map((s, idx) => {
-        const words = s.en.split(' ');
-        const shuffled = [...words].sort(() => Math.random() - 0.5);
-        return {
-          id: idx,
-          question: `Sắp xếp thành câu tiếng Anh: "${s.vi}"`,
-          correctAnswer: s.en,
-          availableWords: shuffled,
-          selectedWords: [],
-          showResult: false,
-          isCorrect: false
-        };
-      });
-    },
-
-    selectWord(index) {
-      const question = this.sentenceQuestions[this.sentenceCurrentIndex];
-      if (question.showResult) return;
-      
-      const word = question.availableWords[index];
-      if (word) {
-        question.selectedWords.push(word);
-        question.availableWords.splice(index, 1);
-      }
-    },
-
-    removeWord(index) {
-      const question = this.sentenceQuestions[this.sentenceCurrentIndex];
-      if (question.showResult) return;
-      
-      const word = question.selectedWords[index];
-      if (word) {
-        question.availableWords.push(word);
-        question.selectedWords.splice(index, 1);
-        // Sort to maintain consistency
-        question.availableWords.sort(() => Math.random() - 0.5);
-      }
-    },
-
-    clearSentenceSelection() {
-      const question = this.sentenceQuestions[this.sentenceCurrentIndex];
-      if (question.showResult) return;
-      
-      question.availableWords = [...question.availableWords, ...question.selectedWords];
-      question.selectedWords = [];
-      question.availableWords.sort(() => Math.random() - 0.5);
-    },
-
-    shuffleSentenceWords() {
-      const question = this.sentenceQuestions[this.sentenceCurrentIndex];
-      if (question.showResult) return;
-      
-      const allWords = [...question.availableWords, ...question.selectedWords];
-      const shuffled = allWords.sort(() => Math.random() - 0.5);
-      question.availableWords = shuffled;
-      question.selectedWords = [];
-    },
-
-    checkSentence() {
-      const question = this.sentenceQuestions[this.sentenceCurrentIndex];
-      if (question.showResult) return;
-      
-      const userAnswer = question.selectedWords.join(' ').trim();
-      question.isCorrect = userAnswer.toLowerCase() === question.correctAnswer.toLowerCase();
-      question.showResult = true;
-      
-      if (question.isCorrect) {
-        this.sentenceCompleted++;
+    checkSentenceAnswer() {
+      const exercise = this.currentExercise;
+      if (!exercise || exercise.type !== 'sentence' || exercise.showResult) return;
+      const userAnswer = exercise.selectedWords.join(' ');
+      exercise.isCorrect = userAnswer.trim().toLowerCase() === exercise.correctAnswer.trim().toLowerCase();
+      exercise.showResult = true;
+      if (exercise.isCorrect) {
+        this.totalCorrect += 1;
         this.score += 15;
       }
-    },
-
-    nextSentenceQuestion() {
-      if (this.sentenceCurrentIndex < this.sentenceQuestions.length - 1) {
-        this.sentenceCurrentIndex++;
-      } else {
-        this.sentenceAllCompleted = true;
-      }
-    },
-
-    resetSentence() {
-      this.sentenceCurrentIndex = 0;
-      this.sentenceCompleted = 0;
-      this.sentenceAllCompleted = false;
-      this.generateSentenceQuestions();
     }
   }
 };
 </script>
-
-<style scoped>
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 10px;
-}
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 10px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-/* Responsive */
-@media (max-width: 640px) {
-  .grid-cols-3 {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-/* Animation */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.bg-gradient-to-br {
-  animation: fadeIn 0.3s ease-out;
-}
-
-/* Button hover effects */
-button:active {
-  transform: scale(0.97);
-}
-</style>

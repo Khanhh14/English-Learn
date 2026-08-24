@@ -1,5 +1,5 @@
 const DictionaryService = require('../services/dictionary.service');
-const pool = require('../config/db'); // Đường dẫn file kết nối database của bạn
+const pool = require('../config/db');
 
 const dictService = new DictionaryService(pool);
 
@@ -26,7 +26,7 @@ const getWordDetail = async (req, res) => {
   }
 };
 
-// 2. Lấy danh sách Decks (Chủ đề bài học)
+// 2. Lấy danh sách Decks
 const getDecks = async (req, res) => {
   try {
     const [decks] = await pool.execute('SELECT id, title, description FROM decks WHERE status = "published"');
@@ -40,12 +40,12 @@ const getDecks = async (req, res) => {
   }
 };
 
-// 3. Lấy danh sách từ vựng thuộc Deck
+// 3. Lấy danh sách từ vựng thuộc Deck (Đã loại bỏ cột audio_url không có trong bảng words)
 const getWordsByDeck = async (req, res) => {
   try {
     const { deckId } = req.params;
     const [words] = await pool.execute(
-      `SELECT w.id, w.term, dw.deck_id 
+      `SELECT w.id, w.term, w.vietnamese_meaning AS definition, w.vietnamese_meaning, dw.deck_id 
        FROM words w 
        JOIN deck_words dw ON w.id = dw.word_id 
        WHERE dw.deck_id = ?`,
@@ -61,18 +61,33 @@ const getWordsByDeck = async (req, res) => {
   }
 };
 
-// 4. Lấy danh sách câu mẫu thuộc Deck
+// 4. Lấy danh sách câu mẫu (Ưu tiên theo Deck, fallback ngẫu nhiên từ bảng sentences)
 const getSentencesByDeck = async (req, res) => {
   try {
     const { deckId } = req.params;
-    const [sentences] = await pool.execute(
+
+    // Truy vấn câu qua bảng liên kết word_sentences
+    let [sentences] = await pool.execute(
       `SELECT DISTINCT s.id, s.english, s.vietnamese, s.audio_url, s.difficulty_level 
        FROM sentences s
        JOIN word_sentences ws ON s.id = ws.sentence_id
        JOIN deck_words dw ON ws.word_id = dw.word_id
-       WHERE dw.deck_id = ?`,
+       WHERE dw.deck_id = ?
+       LIMIT 6`,
       [deckId]
     );
+
+    // Nếu Deck chưa gán câu, lấy ngẫu nhiên 5 câu từ bảng sentences
+    if (!sentences.length) {
+      const [allSentences] = await pool.execute(
+        `SELECT id, english, vietnamese, audio_url, difficulty_level 
+         FROM sentences 
+         ORDER BY RAND() 
+         LIMIT 5`
+      );
+      sentences = allSentences;
+    }
+
     return res.status(200).json({ success: true, data: sentences });
   } catch (error) {
     console.error('Lỗi tại getSentencesByDeck:', error);

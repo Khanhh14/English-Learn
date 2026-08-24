@@ -1,170 +1,161 @@
-<!-- src/components/Dashboard/LearningTab.vue -->
 <template>
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <!-- Dashboard Header -->
-    <div class="mb-12">
-      <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+  <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+    <div class="space-y-8">
+      <!-- Header -->
+      <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div class="flex items-center gap-3 mb-2">
-            <span class="text-4xl">📖</span>
-            <h1 class="text-3xl lg:text-4xl font-light text-gray-900 tracking-tight">
-              Học tập của tôi
-            </h1>
+          <div class="flex items-center gap-2.5">
+            <span class="text-3xl">📖</span>
+            <h1 class="text-3xl font-black tracking-tight text-slate-800">Bài học</h1>
           </div>
-          <p class="text-gray-500 text-sm lg:text-base font-light">
-            Theo dõi tiến độ học tập và ôn luyện mỗi ngày
+          <p class="mt-1 text-sm font-semibold text-slate-400">
+            {{ totalAvailableWords }} từ vựng sẵn sàng luyện tập
           </p>
         </div>
-        
-        <!-- Stats Cards -->
-        <div class="flex gap-4 flex-wrap">
-          <div class="bg-white px-6 py-3 rounded-xl shadow-sm border border-gray-100 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-xl">🔥</div>
-            <div>
-              <p class="text-xs text-gray-400 font-medium">STREAK</p>
-              <p class="text-lg font-semibold text-gray-800">3 ngày</p>
-            </div>
+
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2 rounded-2xl border-2 border-amber-200 bg-amber-50/80 px-4 py-2 text-sm font-black text-amber-700 shadow-xs">
+            <span>⭐</span>
+            <span>{{ totalXp }} <span class="text-xs uppercase">XP</span></span>
           </div>
-          <div class="bg-white px-6 py-3 rounded-xl shadow-sm border border-gray-100 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-xl">⭐</div>
-            <div>
-              <p class="text-xs text-gray-400 font-medium">ĐIỂM</p>
-              <p class="text-lg font-semibold text-gray-800">1,250 XP</p>
-            </div>
-          </div>
-          <div class="bg-white px-6 py-3 rounded-xl shadow-sm border border-gray-100 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-xl">✅</div>
-            <div>
-              <p class="text-xs text-gray-400 font-medium">HOÀN THÀNH</p>
-              <p class="text-lg font-semibold text-gray-800">{{ chapters.length }} chương</p>
-            </div>
+          <div class="flex items-center gap-2 rounded-2xl border-2 border-orange-200 bg-orange-50/80 px-4 py-2 text-sm font-black text-orange-700 shadow-xs">
+            <span>🔥</span>
+            <span>{{ streak }} <span class="text-xs uppercase">ngày</span></span>
           </div>
         </div>
-      </div>
-    </div>
+      </header>
 
-    <!-- Loading State -->
-    <div v-if="loading" class="flex flex-col items-center justify-center py-32">
-      <div class="relative">
-        <div class="w-16 h-16 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
-        <div class="absolute inset-0 flex items-center justify-center text-2xl">📚</div>
-      </div>
-      <p class="mt-6 text-gray-400 text-sm font-medium">Đang tải dữ liệu bài học...</p>
-    </div>
-
-    <!-- Error State -->
-    <div v-else-if="errorMessage" class="bg-red-50 rounded-2xl p-8 text-center border border-red-100">
-      <span class="text-5xl block mb-4">😅</span>
-      <p class="text-red-600 font-medium mb-3">{{ errorMessage }}</p>
-      <button @click="fetchLearningData" class="text-blue-500 text-sm font-medium hover:underline">
-        Thử lại
-      </button>
-    </div>
-
-    <!-- Main Content -->
-    <div v-else>
-      <!-- Chapter Selection -->
-      <div class="mb-8">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-xl font-semibold text-gray-800 flex items-center gap-2">
-            <span class="w-1 h-6 bg-blue-500 rounded-full"></span>
-            Chọn chủ đề
-          </h2>
-          <span class="text-sm text-gray-400 font-medium">{{ chapters.length }} chủ đề</span>
+      <!-- Loading State -->
+      <div v-if="loading" class="flex min-h-[300px] flex-col items-center justify-center rounded-3xl border-2 border-slate-100 bg-white p-8 shadow-sm">
+        <div class="relative flex items-center justify-center">
+          <div class="h-14 w-14 animate-spin rounded-full border-4 border-slate-100 border-t-indigo-600"></div>
+          <span class="absolute text-xl">📚</span>
         </div>
-        
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          <button
-            v-for="chapter in chapters"
-            :key="chapter.id"
-            @click="selectChapter(chapter.id)"
-            :class="[
-              'p-4 rounded-2xl border-2 transition-all duration-300 text-center group cursor-pointer',
-              selectedChapterId === chapter.id 
-                ? 'border-blue-500 bg-blue-50 shadow-lg shadow-blue-100' 
-                : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
-            ]"
-          >
-            <span class="text-3xl block mb-1 group-hover:scale-110 transition-transform">
-              {{ chapter.icon }}
-            </span>
-            <span class="text-sm font-medium text-gray-700 line-clamp-1">{{ chapter.name }}</span>
-            <span class="text-xs text-gray-400 mt-1 block">
-              {{ chapter.totalWords }} từ
-            </span>
-          </button>
-        </div>
+        <p class="mt-4 text-sm font-bold text-slate-400">Đang tải danh sách bài học...</p>
       </div>
 
-      <!-- Selected Chapter Content -->
-      <div v-if="selectedChapter" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Left Column: Lesson Activities -->
-        <div class="lg:col-span-2">
-          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 lg:p-8">
-            <div class="flex items-center justify-between mb-6">
-              <div>
-                <h2 class="text-xl font-semibold text-gray-800 flex items-center gap-2">
-                  <span>{{ selectedChapter.icon }}</span>
-                  {{ selectedChapter.name }}
-                </h2>
-                <p class="text-sm text-gray-500 mt-1">{{ selectedChapter.description }}</p>
-              </div>
-              <span class="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-medium">
-                {{ currentWords.length }} từ vựng
-              </span>
-            </div>
+      <!-- Error State -->
+      <div v-else-if="errorMessage" class="rounded-3xl border-2 border-rose-100 bg-rose-50/60 p-8 text-center shadow-sm">
+        <span class="mb-2 block text-4xl">😅</span>
+        <p class="font-bold text-rose-600">{{ errorMessage }}</p>
+        <button 
+          @click="fetchLearningData" 
+          class="mt-4 rounded-xl border-b-4 border-indigo-700 bg-indigo-600 px-5 py-2 text-xs font-black text-white hover:bg-indigo-500 active:translate-y-0.5"
+        >
+          Thử lại
+        </button>
+      </div>
 
-            <!-- Lesson Modes -->
-            <div class="space-y-4">
-              <div 
-                v-for="lesson in activeLessons" 
-                :key="lesson.id"
-                @click="handleStartLesson(selectedChapter.id, lesson.id)"
-                class="group bg-gray-50 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 rounded-xl p-5 border-2 border-transparent hover:border-blue-200 transition-all duration-300 cursor-pointer"
+      <!-- Content Area -->
+      <div v-else class="space-y-8">
+        <!-- Chapter Selector Pills/Grid -->
+        <div>
+          <div class="mb-4 flex items-center justify-between">
+            <h2 class="text-xs font-black uppercase tracking-wider text-slate-400">Lộ trình học tập</h2>
+            <span class="text-xs font-bold text-slate-400">{{ chapters.length }} chương</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6">
+            <button
+              v-for="chapter in chapters"
+              :key="chapter.id"
+              @click="selectChapter(chapter.id)"
+              :class="[
+                'group relative flex flex-col items-center justify-center rounded-2xl border-2 p-3.5 text-center transition-all active:translate-y-0.5',
+                selectedChapterId === chapter.id
+                  ? 'border-indigo-600 bg-indigo-50/40 border-b-4 shadow-sm'
+                  : 'border-slate-200/80 bg-white hover:border-slate-300 hover:bg-slate-50'
+              ]"
+            >
+              <span class="mb-1 flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-[11px] font-black group-hover:bg-indigo-100 group-hover:text-indigo-600"
+                :class="selectedChapterId === chapter.id ? 'bg-indigo-600 text-white group-hover:bg-indigo-600 group-hover:text-white' : 'text-slate-500'"
               >
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-4 flex-1">
-                    <div class="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-                      {{ lesson.icon }}
-                    </div>
-                    <div>
-                      <h3 class="font-semibold text-gray-800">{{ lesson.name }}</h3>
-                      <p class="text-sm text-gray-500">{{ lesson.description }}</p>
-                    </div>
+                {{ chapter.chapterNumber }}
+              </span>
+              <span class="text-2xl transition group-hover:scale-110">{{ chapter.icon }}</span>
+              <span class="mt-1.5 text-xs font-extrabold text-slate-800 line-clamp-1">{{ chapter.name }}</span>
+              <span class="text-[10px] font-bold text-slate-400">{{ chapter.totalWords || 0 }} từ</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Selected Chapter Detail & Lesson List -->
+        <div v-if="selectedChapter" class="space-y-5">
+          <!-- Chapter Banner -->
+          <div class="rounded-3xl border-2 border-slate-100 bg-gradient-to-r from-indigo-50/70 via-sky-50/40 to-white p-6 sm:p-7 shadow-xs">
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <span class="inline-block rounded-lg bg-indigo-600 px-2.5 py-1 text-[10px] font-black tracking-wider text-white uppercase">
+                  Chương {{ selectedChapter.chapterNumber }}
+                </span>
+                <h3 class="mt-2 text-2xl font-black text-slate-800 sm:text-3xl flex items-center gap-2">
+                  <span>{{ selectedChapter.icon }}</span> {{ selectedChapter.name }}
+                </h3>
+                <p class="mt-1 text-xs sm:text-sm font-medium text-slate-500">{{ selectedChapter.description }}</p>
+              </div>
+
+              <div class="self-start sm:self-center">
+                <span class="rounded-xl border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-extrabold text-slate-600 shadow-xs">
+                  {{ selectedChapter.lessons.length }} bài học
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Redesigned Lesson Cards -->
+          <div class="grid grid-cols-1 gap-3.5">
+            <div
+              v-for="lesson in selectedChapter.lessons"
+              :key="lesson.id"
+              @click="handleStartLesson(selectedChapter.id, lesson.id)"
+              class="group relative flex flex-col justify-between gap-4 rounded-2xl border-2 border-slate-100 bg-white p-4 transition-all hover:border-indigo-200 hover:shadow-md sm:flex-row sm:items-center sm:p-5 cursor-pointer"
+            >
+              <!-- Left: Lesson Info -->
+              <div class="flex items-center gap-4">
+                <!-- Lesson Index Icon Box -->
+                <div class="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-slate-50 border border-slate-100 text-2xl shadow-inner group-hover:scale-105 group-hover:bg-indigo-50 transition-all">
+                  <span>{{ lesson.icon }}</span>
+                  <span class="absolute -top-1.5 -left-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-slate-800 text-[10px] font-black text-white">
+                    {{ lesson.index }}
+                  </span>
+                </div>
+
+                <!-- Text Detail -->
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h4 class="text-base font-extrabold text-slate-800 group-hover:text-indigo-600 transition-colors">
+                      {{ lesson.title }}
+                    </h4>
+                    <span 
+                      :class="[
+                        'rounded-md px-2 py-0.5 text-[10px] font-black uppercase tracking-wider',
+                        lesson.type === 'Mới' ? 'bg-emerald-100 text-emerald-700' : '',
+                        lesson.type === 'Ôn tập' ? 'bg-amber-100 text-amber-700' : '',
+                        lesson.type === 'Tổng kết' ? 'bg-indigo-100 text-indigo-700' : ''
+                      ]"
+                    >
+                      {{ lesson.type }}
+                    </span>
                   </div>
-                  <svg class="w-5 h-5 text-gray-300 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                  </svg>
+                  <p class="mt-0.5 text-xs font-semibold text-slate-400">
+                    {{ lesson.description }}
+                  </p>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
 
-        <!-- Right Column: Vocabulary List & Stats -->
-        <div class="lg:col-span-1 space-y-6">
-          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="font-semibold text-gray-800 flex items-center gap-2">
-                <span class="text-lg">📝</span>
-                Danh sách từ vựng
-              </h3>
-              <span class="text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-600">
-                {{ currentWords.length }}
-              </span>
-            </div>
-
-            <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
-              <div
-                v-for="item in currentWords"
-                :key="item.id"
-                @click="playPronunciation(item.term)"
-                class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-indigo-50 transition-colors group cursor-pointer border border-gray-50"
-              >
-                <span class="font-medium text-gray-700 capitalize text-sm">{{ item.term }}</span>
-                <span class="text-gray-400 group-hover:text-indigo-600 transition-colors text-xs flex items-center gap-1">
-                  🔊 Nghe
+              <!-- Right: Meta & CTA Button -->
+              <div class="flex items-center justify-between gap-4 border-t border-slate-100 pt-3 sm:border-0 sm:pt-0">
+                <span class="flex items-center gap-1.5 text-xs font-bold text-slate-400">
+                  <span>📝</span> {{ lesson.questions }} câu
                 </span>
+
+                <button 
+                  type="button"
+                  class="flex items-center gap-1 rounded-xl border-b-4 border-indigo-700 bg-indigo-600 px-5 py-2 text-xs font-black text-white shadow-xs transition hover:bg-indigo-500 active:border-b-0 active:translate-y-1"
+                >
+                  <span>Bắt đầu</span>
+                  <span>→</span>
+                </button>
               </div>
             </div>
           </div>
@@ -185,14 +176,11 @@ export default {
       chapters: [],
       selectedChapterId: null,
       selectedChapter: null,
-      currentWords: [],
+      totalAvailableWords: 0,
       loading: true,
       errorMessage: '',
-      activeLessons: [
-        { id: 'vocab', name: 'Luyện từ vựng qua Flashcard', icon: '🃏', description: 'Ghi nhớ mặt chữ và nghĩa từ vựng' },
-        { id: 'listening', name: 'Luyện nghe & Chọn từ', icon: '🎧', description: 'Nghe phát âm chuẩn và nhận diện từ' },
-        { id: 'quiz', name: 'Trắc nghiệm phản xạ', icon: '🧠', description: 'Ôn tập và kiểm tra trí nhớ tức thì' }
-      ]
+      streak: 3,
+      totalXp: 0
     };
   },
   mounted() {
@@ -203,27 +191,23 @@ export default {
       try {
         this.loading = true;
         this.errorMessage = '';
-        
-        // Gọi API lấy toàn bộ danh sách Deck trong DB
+
         const res = await axios.get('http://localhost:4000/api/vocab/decks');
-        const rawDecks = res.data.data || [];
+        const rawDecks = res.data?.data || res.data || [];
 
-        // Map cấu trúc deck từ DB thành đối tượng chapter hoàn chỉnh
-        this.chapters = rawDecks.map(deck => ({
-          id: deck.id,
-          name: deck.title,
-          description: deck.description || 'Chủ đề từ vựng quen thuộc',
-          icon: this.getDeckIcon(deck.title),
-          totalWords: 0
-        }));
+        this.chapters = rawDecks.length
+          ? rawDecks.map((deck, index) => this.buildChapter(deck, index + 1))
+          : this.getFallbackChapters();
 
-        // Mặc định chọn chủ đề đầu tiên
+        if (this.chapters.length > 0) {
+          await this.selectChapter(this.chapters[0].id);
+        }
+      } catch (error) {
+        console.warn('Lỗi khi tải dữ liệu từ API:', error);
+        this.chapters = this.getFallbackChapters();
         if (this.chapters.length > 0) {
           this.selectChapter(this.chapters[0].id);
         }
-      } catch (error) {
-        console.error('Lỗi khi tải dữ liệu:', error);
-        this.errorMessage = 'Không thể tải danh sách bài học từ máy chủ.';
       } finally {
         this.loading = false;
       }
@@ -231,72 +215,75 @@ export default {
 
     async selectChapter(chapterId) {
       this.selectedChapterId = chapterId;
-      this.selectedChapter = this.chapters.find(c => c.id === chapterId);
-      
+      this.selectedChapter = this.chapters.find((chapter) => chapter.id === chapterId) || null;
+
+      if (!this.selectedChapter) return;
+
       try {
-        // Tải danh sách từ tương ứng với Deck đã chọn
         const wordsRes = await axios.get(`http://localhost:4000/api/vocab/decks/${chapterId}/words`);
-        this.currentWords = wordsRes.data.data || [];
-        
-        // Cập nhật số lượng từ hiển thị lên thẻ
-        if (this.selectedChapter) {
-          this.selectedChapter.totalWords = this.currentWords.length;
-        }
-      } catch (error) {
-        console.error('Lỗi khi tải từ vựng của chủ đề:', error);
+        const words = wordsRes.data?.data || wordsRes.data || [];
+        this.totalAvailableWords = words.length;
+        this.selectedChapter.totalWords = words.length;
+      } catch {
+        this.totalAvailableWords = this.selectedChapter.totalWords || 5;
       }
     },
 
-    handleStartLesson(chapterId, lessonType) {
-      this.$emit('start-learning', { chapterId, lessonType });
+    handleStartLesson(chapterId, lessonId) {
+      this.$emit('start-learning', { 
+        chapterId, 
+        lessonId, 
+        deckId: chapterId,
+        deckTitle: this.selectedChapter ? this.selectedChapter.name : 'Bài học'
+      });
     },
 
-    async playPronunciation(term) {
-      try {
-        const res = await axios.get(`http://localhost:4000/api/vocab/word/${term}`);
-        const wordData = res.data?.data;
-        const hasAudioUrl = wordData?.audio_url && typeof wordData.audio_url === 'string' && wordData.audio_url.trim().length > 0;
-
-        if (hasAudioUrl) {
-          const audio = new Audio(wordData.audio_url);
-          audio.play().catch(() => this.speakWithBrowser(term));
-        } else {
-          this.speakWithBrowser(term);
-        }
-      } catch (error) {
-        this.speakWithBrowser(term);
-      }
+    buildChapter(deck, chapterNumber) {
+      return {
+        id: deck.id,
+        name: deck.title || `Chương ${chapterNumber}`,
+        description: deck.description || 'Chủ đề từ vựng mới và ôn tập theo từng bài học.',
+        icon: this.getDeckIcon(deck.title),
+        chapterNumber,
+        totalWords: 5,
+        lessons: this.createLessonSequence(chapterNumber, deck.title)
+      };
     },
 
-    speakWithBrowser(text) {
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'en-US';
-        utterance.rate = 0.9;
-        window.speechSynthesis.speak(utterance);
-      }
+    createLessonSequence(chapterNumber, deckTitle = '') {
+      const titleSuffix = deckTitle ? ` · ${deckTitle}` : ` · Chương ${chapterNumber}`;
+      return [
+        { id: 'new-1', type: 'Mới', title: `Khám phá từ mới${titleSuffix}`, description: 'Học phát âm và ghi nhớ mặt chữ.', icon: '🧩', questions: 6 },
+        { id: 'new-2', type: 'Mới', title: `Luyện nghe phản xạ${titleSuffix}`, description: 'Nhận biết từ vựng qua âm thanh.', icon: '🔊', questions: 6 },
+        { id: 'review-1', type: 'Ôn tập', title: `Ghép câu & Ngữ cảnh`, description: 'Thực hành sắp xếp câu chuẩn cấu trúc.', icon: '✍️', questions: 5 },
+        { id: 'summary', type: 'Tổng kết', title: `Thử thách vượt ải`, description: 'Tổng hợp từ vựng và câu của bài.', icon: '🏆', questions: 8 }
+      ].map((lesson, index) => ({
+        ...lesson,
+        index: index + 1
+      }));
+    },
+
+    getFallbackChapters() {
+      return [
+        { id: 4, name: 'Gia đình', description: 'Các từ vựng cơ bản về chủ đề gia đình', icon: '👨‍👩‍👧‍👦', chapterNumber: 1, totalWords: 7, lessons: this.createLessonSequence(1, 'Gia đình') },
+        { id: 5, name: 'Màu sắc', description: 'Từ vựng về các màu sắc quen thuộc', icon: '🎨', chapterNumber: 2, totalWords: 6, lessons: this.createLessonSequence(2, 'Màu sắc') },
+        { id: 6, name: 'Động vật', description: 'Tên các loài động vật hoang dã và quen thuộc', icon: '🦁', chapterNumber: 3, totalWords: 6, lessons: this.createLessonSequence(3, 'Động vật') },
+        { id: 7, name: 'Thức ăn', description: 'Từ vựng về món ăn, thức uống và ẩm thực', icon: '🍔', chapterNumber: 4, totalWords: 6, lessons: this.createLessonSequence(4, 'Thức ăn') },
+        { id: 8, name: 'Công việc', description: 'Tên các nghề nghiệp phổ biến trong xã hội', icon: '💼', chapterNumber: 5, totalWords: 5, lessons: this.createLessonSequence(5, 'Công việc') },
+        { id: 9, name: 'Cảm xúc', description: 'Từ vựng miêu tả cảm xúc và tâm trạng', icon: '😊', chapterNumber: 6, totalWords: 5, lessons: this.createLessonSequence(6, 'Cảm xúc') }
+      ];
     },
 
     getDeckIcon(title) {
-      const lowerTitle = (title || '').toLowerCase();
-      if (lowerTitle.includes('gia đình') || lowerTitle.includes('family')) return '👨‍👩‍👧‍👦';
-      if (lowerTitle.includes('màu') || lowerTitle.includes('color')) return '🎨';
-      if (lowerTitle.includes('động vật') || lowerTitle.includes('animal')) return '🦁';
-      if (lowerTitle.includes('thức ăn') || lowerTitle.includes('food')) return '🍔';
-      if (lowerTitle.includes('công việc') || lowerTitle.includes('job')) return '💼';
-      if (lowerTitle.includes('cảm xúc') || lowerTitle.includes('emotion')) return '😊';
+      const lower = (title || '').toLowerCase();
+      if (lower.includes('gia đình') || lower.includes('family')) return '👨‍👩‍👧‍👦';
+      if (lower.includes('màu') || lower.includes('color')) return '🎨';
+      if (lower.includes('động vật') || lower.includes('animal')) return '🦁';
+      if (lower.includes('thức ăn') || lower.includes('food')) return '🍔';
+      if (lower.includes('công việc') || lower.includes('job')) return '💼';
+      if (lower.includes('cảm xúc') || lower.includes('emotion')) return '😊';
       return '📚';
     }
   }
 };
 </script>
-
-<style scoped>
-.line-clamp-1 {
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-</style>

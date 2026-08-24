@@ -14,28 +14,46 @@
         <div class="flex h-full gap-5">
           <!-- Sidebar -->
           <div class="w-[260px] flex-shrink-0 h-full">
-            <div class="sidebar-fixed h-full bg-white/60 backdrop-blur-xl rounded-3xl shadow-xl border border-white/50 p-4">
-              <nav class="space-y-1">
-                <button 
-                  v-for="item in menuItems" 
-                  :key="item.id"
-                  @click="activeTab = item.id"
-                  class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 text-left"
-                  :class="activeTab === item.id 
-                    ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg' 
-                    : 'text-gray-600 hover:bg-white/50 hover:text-indigo-600'"
-                >
-                  <span class="text-xl">{{ item.icon }}</span>
-                  <span class="font-medium">{{ item.name }}</span>
-                  <span v-if="item.badge" class="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full">{{ item.badge }}</span>
-                </button>
-              </nav>
+            <div class="sidebar-fixed flex flex-col justify-between h-full bg-white/60 backdrop-blur-xl rounded-3xl shadow-xl border border-white/50 p-4">
+              <div>
+                <!-- Brand Logo -->
+                <router-link to="/" class="flex items-center gap-3 px-3 py-2 mb-4 rounded-2xl transition hover:bg-white/50 group" title="Về trang chủ">
+                  <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-xl shadow-md group-hover:scale-105 transition-transform">
+                    📚
+                  </div>
+                  <div>
+                    <h1 class="text-lg font-black bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">LinguaFlow</h1>
+                    <p class="text-[10px] text-gray-400">Học tiếng Anh thông minh</p>
+                  </div>
+                </router-link>
 
-              <div class="mt-4 pt-4 border-t border-gray-200/50">
-                <button @click="handleLogout" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-500 hover:bg-red-50 hover:text-red-600 transition-all">
-                  <span class="text-xl">🚪</span>
-                  <span class="font-medium">Đăng xuất</span>
-                </button>
+                <!-- Navigation Tabs -->
+                <nav class="space-y-1">
+                  <button 
+                    v-for="item in menuItems" 
+                    :key="item.id" 
+                    @click="activeTab = item.id" 
+                    class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 text-left" 
+                    :class="activeTab === item.id 
+                      ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg' 
+                      : 'text-gray-600 hover:bg-white/50 hover:text-indigo-600'"
+                  >
+                    <span class="text-xl">{{ item.icon }}</span>
+                    <span class="font-medium">{{ item.name }}</span>
+                    <span v-if="item.badge" class="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full">{{ item.badge }}</span>
+                  </button>
+                </nav>
+              </div>
+
+              <!-- Footer Sidebar: Nút Trang chủ thay cho nút Đăng xuất -->
+              <div class="pt-4 border-t border-gray-200/50">
+                <router-link 
+                  to="/" 
+                  class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-all font-medium"
+                >
+                  <span class="text-xl">🏠</span>
+                  <span>Trang chủ</span>
+                </router-link>
               </div>
             </div>
           </div>
@@ -117,9 +135,20 @@ export default {
       ]
     }
   },
+  mounted() {
+    if (this.$route.query && this.$route.query.tab) {
+      this.activeTab = this.$route.query.tab;
+    }
+  },
+  watch: {
+    '$route.query.tab'(newTab) {
+      if (newTab) {
+        this.activeTab = newTab;
+      }
+    }
+  },
   methods: {
     goToLearning(payload) {
-      // If called without payload, just go to learning root
       if (!payload) {
         this.$router.push({ name: 'learning' });
         return;
@@ -127,7 +156,6 @@ export default {
 
       const { chapterId, lessonType, chapterTitle } = payload || {};
 
-      // Build params and query for navigation
       const params = {};
       if (chapterId !== undefined && chapterId !== null) params.deckId = chapterId;
 
@@ -139,11 +167,6 @@ export default {
     },
     updateUser(updatedData) {
       this.user = { ...this.user, ...updatedData }
-    },
-    handleLogout() {
-      if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
-        this.$router.push('/login')
-      }
     }
   }
 }
@@ -169,7 +192,6 @@ export default {
   animation-delay: 4s;
 }
 
-/* Sidebar sits flush inside the dashboard shell and the main panel uses the remaining space */
 .sidebar-fixed {
   position: relative;
   z-index: 10;
