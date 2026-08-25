@@ -14,7 +14,7 @@
         <div class="auth-panel overflow-hidden rounded-[32px] border border-white/60 bg-white/45 shadow-[0_40px_120px_rgba(99,102,241,0.15)] backdrop-blur-2xl lg:grid lg:grid-cols-[1.05fr_1fr]">
           <div class="auth-hero hidden p-10 lg:flex lg:flex-col">
             <div class="hero-pill inline-flex w-fit items-center gap-2 rounded-full border border-white/50 bg-white/20 px-4 py-2 text-sm font-medium text-emerald-700 backdrop-blur-sm">
-              <span></span>
+              <span>⭐</span>
               <span>Bắt đầu miễn phí ngay hôm nay</span>
             </div>
 
@@ -37,7 +37,7 @@
                 </div>
                 <div>
                   <p class="font-semibold text-slate-800">Tạo nền tảng học vững chắc</p>
-                  <p class="text-sm text-slate-600">Theo dõi tiến độ và nhận gợi ý phù hợp ngay từ đầu.</p>
+                  <p class="text-sm text-slate-600">Khoá học và nhận gợi ý phù hợp ngay từ đầu.</p>
                 </div>
               </div>
 
@@ -81,7 +81,7 @@
               <p class="mt-2 text-sm text-slate-500">Bắt đầu hành trình học tiếng Anh của bạn</p>
             </div>
 
-            <!-- Thông báo lỗi -->
+            <!-- Thông báo lỗi hiển thị inline nếu có -->
             <div v-if="errorMessage" class="mb-4 rounded-xl bg-rose-50 border border-rose-200 p-3 text-sm text-rose-600 text-center">
               {{ errorMessage }}
             </div>
@@ -242,11 +242,13 @@ export default {
 
       if (this.password !== this.confirmPassword) {
         this.errorMessage = 'Mật khẩu xác nhận không khớp!'
+        this.$toast.error(this.errorMessage)
         return
       }
 
       if (!this.agreeTerms) {
         this.errorMessage = 'Vui lòng đồng ý với điều khoản & chính sách!'
+        this.$toast.warning(this.errorMessage)
         return
       }
 
@@ -271,10 +273,15 @@ export default {
           throw new Error(data.message || 'Đăng ký thất bại, vui lòng thử lại!')
         }
 
-        alert(data.message || 'Đăng ký tài khoản thành công!')
+        // Toast thông báo thành công
+        this.$toast.success(data.message || 'Đăng ký tài khoản thành công!')
+        
+        // Điều hướng sang trang đăng nhập
         this.$router.push('/login')
       } catch (error) {
-        this.errorMessage = error.message
+        this.errorMessage = error.message || 'Không thể kết nối đến máy chủ!'
+        // Toast thông báo lỗi
+        this.$toast.error(this.errorMessage)
       } finally {
         this.isLoading = false
       }
