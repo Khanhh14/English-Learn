@@ -229,7 +229,6 @@ export default {
 
         const rawUser = data.user || data.data?.user || data.data || {}
 
-        // Chuẩn hoá cấu trúc user trước khi lưu
         const userObj = {
           id: rawUser.id,
           name: rawUser.name || rawUser.username || 'Người dùng',
@@ -244,15 +243,18 @@ export default {
           joinDate: rawUser.joinDate || rawUser.created_at || rawUser.createdAt || new Date().toISOString()
         }
 
-        // Luôn lưu vào localStorage để Dashboard & ProfileTab luôn đọc được
         localStorage.setItem('token', data.token)
         localStorage.setItem('user', JSON.stringify(userObj))
 
-        // Điều hướng: nếu có query redirect thì ưu tiên, nếu không thì vào dashboard
+        // Toast XANH LÁ (Mặc định)
+        this.$toast.success('Đăng nhập thành công!')
+
         const redirectPath = this.$route.query.redirect || '/dashboard'
         this.$router.push(redirectPath)
       } catch (err) {
         this.errorMessage = err.message || 'Không thể kết nối đến máy chủ!'
+        // Toast ĐỎ (Mặc định)
+        this.$toast.error(this.errorMessage)
       } finally {
         this.isLoading = false
       }

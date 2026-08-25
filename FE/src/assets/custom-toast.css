@@ -1,0 +1,54 @@
+/* src/assets/css/custom-toast.css */
+
+/* Khung viền và bo góc chung */
+.Vue-Toastification__toast {
+  border-radius: 16px !important;
+  padding: 14px 18px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(99, 102, 241, 0.08) !important;
+  font-family: inherit !important;
+  backdrop-filter: blur(8px) !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+}
+
+/* Toast Thành công (Khớp tông tím/hồng của ứng dụng) */
+.Vue-Toastification__toast--success {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #ec4899 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Toast Lỗi */
+.Vue-Toastification__toast--error {
+  background: linear-gradient(135deg, #ef4444 0%, #f43f5e 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Toast Cảnh báo */
+.Vue-Toastification__toast--warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+  color: #ffffff !important;
+}
+
+/* Toast Thông tin */
+.Vue-Toastification__toast--info {
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%) !important;
+  color: #ffffff !important;
+}
+
+/* Tùy chỉnh thanh thời gian chạy bên dưới */
+.Vue-Toastification__progress-bar {
+  background: rgba(255, 255, 255, 0.6) !important;
+  height: 3px !important;
+}
+
+/* Nút tắt */
+.Vue-Toastification__close-button {
+  opacity: 0.8 !important;
+  transition: opacity 0.2s ease !important;
+}
+
+.Vue-Toastification__close-button:hover {
+  opacity: 1 !important;
+}
