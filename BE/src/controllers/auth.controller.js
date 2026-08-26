@@ -1,7 +1,10 @@
 const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
+const { sendResetCodeEmail } = require('../services/emailService');
+
+// Bộ nhớ tạm lưu mã OTP (Key: email, Value: { code, expiresAt })
+const otpStore = new Map();
 
 // 1. ĐĂNG KÝ
 exports.register = async (req, res) => {
@@ -196,55 +199,70 @@ exports.changePassword = async (req, res) => {
   }
 };
 
-// 6. QUÊN MẬT KHẨU (Gửi token reset qua email)
+// 6. QUÊN MẬT KHẨU (Tạo mã OTP 6 số và gửi qua Email)
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-    const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
 
+    if (!email) {
+      return res.status(400).json({ message: 'Vui lòng cung cấp email!' });
+    }
+
+    const [users] = await db.query('SELECT id FROM users WHERE email = ?', [email]);
     if (users.length === 0) {
       return res.status(404).json({ message: 'Email không tồn tại trong hệ thống!' });
     }
 
-    const user = users[0];
-    const resetToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '15m' });
+    // Tạo mã ngẫu nhiên 6 chữ số
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = Date.now() + 2 * 60 * 1000; // Hạn 2 phút (120s)
 
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
-    });
+    // Lưu mã vào RAM
+    otpStore.set(email, { code, expiresAt });
 
-    const resetLink = `http://localhost:4000/reset-password/${resetToken}`;
+    // Gửi email
+    await sendResetCodeEmail(email, code);
 
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: user.email,
-      subject: 'Yêu cầu đặt lại mật khẩu - Vocab Master',
-      html: `<p>Nhấn vào link dưới đây để đặt lại mật khẩu (hết hạn sau 15 phút):</p><a href="${resetLink}">${resetLink}</a>`
-    });
-
-    res.status(200).json({ message: 'Link đặt lại mật khẩu đã được gửi về email!' });
+    res.status(200).json({ message: 'Mã xác thực đã được gửi về email của bạn!' });
   } catch (error) {
     res.status(500).json({ message: 'Lỗi server!', error: error.message });
   }
 };
 
-// 7. ĐẶT LẠI MẬT KHẨU MỚI (Từ link gửi qua email)
+// 7. ĐẶT LẠI MẬT KHẨU MỚI (Xác thực bằng OTP từ RAM và Email)
 exports.resetPassword = async (req, res) => {
   try {
-    const { token, newPassword } = req.body;
+    const { email, code, newPassword } = req.body;
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!email || !code || !newPassword) {
+      return res.status(400).json({ message: 'Vui lòng cung cấp đầy đủ thông tin!' });
+    }
+
+    const record = otpStore.get(email);
+
+    // Kiểm tra mã OTP khớp
+    if (!record || record.code !== code) {
+      return res.status(400).json({ message: 'Mã xác thực không chính xác!' });
+    }
+
+    // Kiểm tra mã còn hạn
+    if (Date.now() > record.expiresAt) {
+      otpStore.delete(email);
+      return res.status(400).json({ message: 'Mã xác thực đã hết hạn, vui lòng yêu cầu mã mới!' });
+    }
+
+    // Mã hóa mật khẩu mới
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-    await db.query('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, decoded.id]);
+    // Cập nhật CSDL
+    await db.query('UPDATE users SET password = ? WHERE email = ?', [hashedPassword, email]);
+
+    // Xóa mã OTP khỏi bộ nhớ
+    otpStore.delete(email);
 
     res.status(200).json({ message: 'Đặt lại mật khẩu thành công!' });
   } catch (error) {
-    res.status(400).json({ message: 'Token không hợp lệ hoặc đã hết hạn!' });
+    res.status(500).json({ message: 'Lỗi server!', error: error.message });
   }
 };

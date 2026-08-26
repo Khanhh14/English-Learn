@@ -23,6 +23,7 @@
             <p class="mt-2 text-sm text-slate-500">Nhập email để nhận mã xác thực và đổi mật khẩu</p>
           </div>
 
+          <!-- BƯỚC 1: NHẬP EMAIL -->
           <div v-if="step === 1">
             <form @submit.prevent="sendCode" class="space-y-4">
               <div class="space-y-2">
@@ -33,19 +34,30 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                     </svg>
                   </span>
-                  <input v-model="email" type="email" placeholder="nhap@email.com" class="field-input" required />
+                  <input 
+                    v-model.trim="email" 
+                    type="email" 
+                    placeholder="nhap@email.com" 
+                    class="field-input" 
+                    required 
+                    :disabled="loading"
+                  />
                 </div>
               </div>
 
               <div class="flex items-center justify-between">
-                <div class="text-sm text-slate-600">Bạn sẽ nhận mã trong email của mình</div>
+                <div class="text-sm text-slate-600">Bạn sẽ nhận mã OTP qua email</div>
                 <router-link to="/login" class="text-sm font-semibold text-indigo-600 hover:text-indigo-700">Đăng nhập</router-link>
               </div>
 
               <div class="pt-2">
-                <button :disabled="loading || !email" type="submit" class="submit-btn w-full rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 px-6 py-3 text-base font-bold text-white shadow-md hover:scale-[1.01] transition-all">
+                <button 
+                  :disabled="loading || !email" 
+                  type="submit" 
+                  class="submit-btn w-full rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 px-6 py-3 text-base font-bold text-white shadow-md hover:scale-[1.01] transition-all disabled:opacity-50 disabled:hover:scale-100"
+                >
                   <span v-if="!loading">Gửi mã đến email</span>
-                  <span v-else>Đang gửi...</span>
+                  <span v-else>Đang gửi mã...</span>
                 </button>
               </div>
 
@@ -54,37 +66,72 @@
             </form>
           </div>
 
+          <!-- BƯỚC 2: NHẬP OTP VÀ MẬT KHẨU MỚI -->
           <div v-else-if="step === 2">
             <form @submit.prevent="resetPassword" class="space-y-4">
               <div class="space-y-2">
-                <label class="block text-sm font-semibold text-slate-700">Mã xác thực</label>
+                <label class="block text-sm font-semibold text-slate-700">Mã xác thực (6 số)</label>
                 <div class="field-shell">
-                  <input v-model="code" type="text" placeholder="Nhập mã" class="field-input" required />
+                  <input 
+                    v-model.trim="code" 
+                    type="text" 
+                    maxlength="6"
+                    placeholder="Nhập mã 6 chữ số" 
+                    class="field-input" 
+                    required 
+                    :disabled="loading"
+                  />
                 </div>
               </div>
 
               <div class="space-y-2">
                 <label class="block text-sm font-semibold text-slate-700">Mật khẩu mới</label>
                 <div class="field-shell">
-                  <input v-model="newPassword" type="password" placeholder="Mật khẩu mới" class="field-input" required />
+                  <input 
+                    v-model="newPassword" 
+                    type="password" 
+                    placeholder="Tối thiểu 6 ký tự" 
+                    class="field-input" 
+                    required 
+                    :disabled="loading"
+                  />
                 </div>
               </div>
 
               <div class="space-y-2">
-                <label class="block text-sm font-semibold text-slate-700">Xác nhận mật khẩu</label>
+                <label class="block text-sm font-semibold text-slate-700">Xác nhận mật khẩu mới</label>
                 <div class="field-shell">
-                  <input v-model="confirmPassword" type="password" placeholder="Nhập lại mật khẩu" class="field-input" required />
+                  <input 
+                    v-model="confirmPassword" 
+                    type="password" 
+                    placeholder="Nhập lại mật khẩu mới" 
+                    class="field-input" 
+                    required 
+                    :disabled="loading"
+                  />
                 </div>
               </div>
 
               <div class="flex items-center justify-between">
-                <div class="text-sm text-slate-600">Mã sẽ hết hạn sau: <span class="font-medium">{{ remaining }}s</span></div>
-                <button type="button" :disabled="resendDisabled" @click="resendCode" class="text-sm font-semibold text-indigo-600 hover:text-indigo-700" v-if="resendDisabled">Gửi lại ({{ remaining }})</button>
-                <button type="button" :disabled="!resendDisabled && !timerRunning" @click="resendCode" class="text-sm font-semibold text-indigo-600 hover:text-indigo-700" v-else>Gửi lại</button>
+                <div class="text-sm text-slate-600">
+                  Mã hết hạn sau: <span class="font-bold text-indigo-600">{{ remaining }}s</span>
+                </div>
+                <button 
+                  type="button" 
+                  :disabled="resendDisabled || loading" 
+                  @click="resendCode" 
+                  class="text-sm font-semibold text-indigo-600 hover:text-indigo-700 disabled:text-slate-400 disabled:cursor-not-allowed"
+                >
+                  {{ resendDisabled ? `Gửi lại (${remaining}s)` : 'Gửi lại mã' }}
+                </button>
               </div>
 
-              <div>
-                <button :disabled="loading" type="submit" class="submit-btn w-full rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 px-6 py-3 text-base font-bold text-white shadow-md hover:scale-[1.01] transition-all">
+              <div class="pt-2">
+                <button 
+                  :disabled="loading" 
+                  type="submit" 
+                  class="submit-btn w-full rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 px-6 py-3 text-base font-bold text-white shadow-md hover:scale-[1.01] transition-all disabled:opacity-50 disabled:hover:scale-100"
+                >
                   <span v-if="!loading">Đặt lại mật khẩu</span>
                   <span v-else>Đang xử lý...</span>
                 </button>
@@ -110,6 +157,9 @@
 <script>
 import Header from '@/components/Home/Header.vue'
 
+// Lấy biến URL từ Vite hoặc gán mặc định http://localhost:4000
+const API_BASE_URL = import.meta.env?.VITE_API_URL || 'http://localhost:4000'
+
 export default {
   name: 'ForgotPassword',
   components: { Header },
@@ -125,78 +175,89 @@ export default {
       error: '',
       remaining: 0,
       timerId: null,
-      timerRunning: false,
       resendDisabled: false
     }
   },
   methods: {
+    // 1. GỬI MÃ OTP LẦN ĐẦU
     async sendCode() {
       this.error = ''
       this.message = ''
+
       if (!this.email) {
-        this.error = 'Vui lòng nhập email.'
+        this.error = 'Vui lòng nhập địa chỉ email.'
         return
       }
 
       this.loading = true
       try {
-        // Gọi backend để gửi mã reset. Endpoint giả định: POST /api/auth/forgot-password { email }
-        const res = await fetch('/api/auth/forgot-password', {
+        const res = await fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: this.email })
         })
 
+        const data = await res.json()
         if (!res.ok) {
-          const payload = await res.json().catch(() => ({}))
-          throw new Error(payload.message || 'Không thể gửi mã. Vui lòng thử lại.')
+          throw new Error(data.message || 'Không thể gửi mã xác nhận. Vui lòng thử lại.')
         }
 
-        this.message = 'Mã xác thực đã được gửi tới email của bạn.'
+        this.message = data.message || 'Mã xác thực đã được gửi tới email của bạn.'
         this.step = 2
-        this.startTimer(120) // mã hợp lệ 2 phút
-        this.resendDisabled = true
+        this.startTimer(120) // Đếm ngược 120 giây (khớp hạn OTP backend)
       } catch (err) {
-        this.error = err.message || 'Lỗi khi gửi mã.'
+        this.error = err.message || 'Có lỗi xảy ra khi kết nối máy chủ.'
       } finally {
         this.loading = false
       }
     },
 
+    // 2. BỘ ĐẾM NGƯỢC THỜI GIAN
     startTimer(seconds) {
       this.remaining = seconds
-      this.timerRunning = true
+      this.resendDisabled = true
+      
       if (this.timerId) clearInterval(this.timerId)
+      
       this.timerId = setInterval(() => {
         if (this.remaining > 0) {
           this.remaining -= 1
         } else {
-          clearInterval(this.timerId)
-          this.timerRunning = false
+          this.stopTimer()
           this.resendDisabled = false
-          this.timerId = null
         }
       }, 1000)
     },
 
+    stopTimer() {
+      if (this.timerId) {
+        clearInterval(this.timerId)
+        this.timerId = null
+      }
+    },
+
+    // 3. GỬI LẠI MÃ OTP
     async resendCode() {
       if (this.resendDisabled) return
+      
       this.error = ''
       this.message = ''
       this.loading = true
+
       try {
-        const res = await fetch('/api/auth/forgot-password', {
+        const res = await fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: this.email, resend: true })
+          body: JSON.stringify({ email: this.email })
         })
+
+        const data = await res.json()
         if (!res.ok) {
-          const payload = await res.json().catch(() => ({}))
-          throw new Error(payload.message || 'Không thể gửi lại mã.')
+          throw new Error(data.message || 'Không thể gửi lại mã xác nhận.')
         }
-        this.message = 'Mã đã được gửi lại.'
+
+        this.message = 'Đã gửi mã xác thực mới vào email!'
         this.startTimer(120)
-        this.resendDisabled = true
       } catch (err) {
         this.error = err.message || 'Lỗi khi gửi lại mã.'
       } finally {
@@ -204,52 +265,56 @@ export default {
       }
     },
 
+    // 4. XÁC THỰC VÀ ĐẶT LẠI MẬT KHẨU
     async resetPassword() {
       this.error = ''
       this.message = ''
 
       if (!this.code) {
-        this.error = 'Vui lòng nhập mã xác thực.'
+        this.error = 'Vui lòng nhập mã xác thực 6 số.'
         return
       }
       if (!this.newPassword || this.newPassword.length < 6) {
-        this.error = 'Mật khẩu phải có ít nhất 6 ký tự.'
+        this.error = 'Mật khẩu mới phải chứa ít nhất 6 ký tự.'
         return
       }
       if (this.newPassword !== this.confirmPassword) {
-        this.error = 'Mật khẩu và xác nhận mật khẩu không khớp.'
+        this.error = 'Mật khẩu xác nhận không khớp.'
         return
       }
 
       this.loading = true
       try {
-        // Gọi backend để đặt lại mật khẩu. Endpoint giả định: POST /api/auth/reset-password { email, code, newPassword }
-        const res = await fetch('/api/auth/reset-password', {
+        const res = await fetch(`${API_BASE_URL}/api/auth/reset-password`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: this.email, code: this.code, newPassword: this.newPassword })
+          body: JSON.stringify({
+            email: this.email,
+            code: this.code,
+            newPassword: this.newPassword
+          })
         })
 
+        const data = await res.json()
         if (!res.ok) {
-          const payload = await res.json().catch(() => ({}))
-          throw new Error(payload.message || 'Không thể đặt lại mật khẩu.')
+          throw new Error(data.message || 'Đặt lại mật khẩu thất bại.')
         }
 
-        this.message = 'Đặt lại mật khẩu thành công. Chuyển về trang đăng nhập...'
-        // Dừng bộ đếm
-        if (this.timerId) { clearInterval(this.timerId); this.timerId = null }
+        this.message = 'Đặt lại mật khẩu thành công! Đang chuyển hướng đăng nhập...'
+        this.stopTimer()
+        
         setTimeout(() => {
           this.$router.push('/login')
-        }, 1200)
+        }, 1500)
       } catch (err) {
-        this.error = err.message || 'Lỗi khi đặt lại mật khẩu.'
+        this.error = err.message || 'Có lỗi xảy ra khi đặt lại mật khẩu.'
       } finally {
         this.loading = false
       }
     }
   },
   beforeUnmount() {
-    if (this.timerId) clearInterval(this.timerId)
+    this.stopTimer()
   }
 }
 </script>
@@ -257,6 +322,8 @@ export default {
 <style scoped>
 @import "@/assets/Auth/Login.css";
 
-/* small tweaks for the forgot password specific layout */
-.auth-panel { max-width: 720px; margin: 0 auto; }
+.auth-panel { 
+  max-width: 720px; 
+  margin: 0 auto; 
+}
 </style>
