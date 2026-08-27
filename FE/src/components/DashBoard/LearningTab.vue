@@ -214,19 +214,24 @@ export default {
       completedLessonKeys: []
     };
   },
+  watch: {
+    userId() {
+      this.fetchLearningData();
+    }
+  },
   mounted() {
     this.fetchLearningData();
   },
-  // Tự động load lại tiến độ mới nhất nếu component được bọc trong <keep-alive>
   activated() {
     this.fetchUserProgress();
   },
   methods: {
+    // 1. Kiểm tra trạng thái hoàn thành bài học
     isLessonCompleted(chapterId, lessonId) {
       return this.completedLessonKeys.includes(`${chapterId}-${lessonId}`);
     },
 
-    // 1. Tải danh sách bài học đã hoàn thành từ CSDL
+    // 2. Lấy dữ liệu tiến độ từ backend
     async fetchUserProgress() {
       try {
         const res = await axios.get('http://localhost:4000/api/vocab-progress/user-progress', {
@@ -240,7 +245,7 @@ export default {
       }
     },
 
-    // 2. Tải toàn bộ danh sách chương và tiến độ
+    // 3. Tải danh sách bộ chủ đề (decks) và số từ của từng chủ đề
     async fetchLearningData() {
       try {
         this.loading = true;
@@ -252,11 +257,27 @@ export default {
         ]);
 
         const rawDecks = decksRes.data?.data || decksRes.data || [];
-        this.chapters = rawDecks.map((deck, index) => this.buildChapter(deck, index + 1));
+        
+        // Nạp và lấy chính xác số từ của từng chương từ API
+        const chaptersWithCount = await Promise.all(
+          rawDecks.map(async (deck, index) => {
+            let count = 0;
+            try {
+              const countRes = await axios.get(`http://localhost:4000/api/vocab/decks/${deck.id}/words`);
+              const list = countRes.data?.data || countRes.data || [];
+              count = list.length;
+            } catch {
+              count = 0;
+            }
+            return this.buildChapter(deck, index + 1, count);
+          })
+        );
+
+        this.chapters = chaptersWithCount;
 
         if (this.chapters.length > 0) {
-          const firstChapterId = this.selectedChapterId || this.chapters[0].id;
-          await this.selectChapter(firstChapterId);
+          const currentId = this.selectedChapterId || this.chapters[0].id;
+          await this.selectChapter(currentId);
         }
       } catch (error) {
         console.error('Lỗi khi tải dữ liệu bài học:', error);
@@ -266,7 +287,7 @@ export default {
       }
     },
 
-    // 3. Chọn chương
+    // 4. Chọn chương
     async selectChapter(chapterId) {
       this.selectedChapterId = chapterId;
       this.selectedChapter = this.chapters.find((chapter) => chapter.id === chapterId) || null;
@@ -283,7 +304,7 @@ export default {
       }
     },
 
-    // 4. Bắt đầu bài học
+    // 5. Phát sự kiện bắt đầu học
     handleStartLesson(chapterId, lessonId) {
       this.$emit('start-learning', { 
         chapterId, 
@@ -294,13 +315,31 @@ export default {
       });
     },
 
-    buildChapter(deck, chapterNumber) {
+    // 6. Hàm hỗ trợ component cha gọi trực tiếp để cập nhật ngay state
+    async markLessonComplete(chapterId, lessonId) {
+      const lessonKey = `${chapterId}-${lessonId}`;
+      try {
+        await axios.post('http://localhost:4000/api/vocab-progress/complete-lesson', {
+          deckId: chapterId,
+          lessonId: lessonId,
+          userId: this.userId
+        });
+
+        if (!this.completedLessonKeys.includes(lessonKey)) {
+          this.completedLessonKeys.push(lessonKey);
+        }
+      } catch (error) {
+        console.error('Lỗi khi lưu tiến độ bài học:', error);
+      }
+    },
+
+    buildChapter(deck, chapterNumber, totalWords = 0) {
       return {
         id: deck.id,
         name: deck.title || `Chương ${chapterNumber}`,
         description: deck.description || '',
         chapterNumber,
-        totalWords: 0,
+        totalWords,
         lessons: this.createLessonSequence(chapterNumber, deck.title)
       };
     },

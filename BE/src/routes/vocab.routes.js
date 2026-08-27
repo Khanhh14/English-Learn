@@ -2,10 +2,14 @@ const express = require('express');
 const router = express.Router();
 const vocabController = require('../controllers/vocab.controller');
 
+// Decks & Words
 router.get('/decks', vocabController.getDecks);
 router.get('/decks/:deckId/words', vocabController.getWordsByDeck);
 router.get('/decks/:deckId/sentences', vocabController.getSentencesByDeck);
-router.get('/sentences', vocabController.getSentencesByDeck); // Cho phép gọi trực tiếp /api/vocab/sentences
-router.get('/word/:term', vocabController.getWordDetail);
+router.get('/words/:term', vocabController.getWordDetail);
+
+// Progress
+router.get('/user-progress', vocabController.getUserProgress);
+router.post('/complete-lesson', vocabController.completeLesson);
 
 module.exports = router;

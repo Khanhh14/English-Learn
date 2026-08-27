@@ -15,7 +15,7 @@
           </button>
           <div>
             <h1 class="text-base font-extrabold text-slate-800 sm:text-lg">{{ effectiveDeckTitle }}</h1>
-            <p class="text-xs font-semibold text-slate-400">{{ currentWords.length }} từ vựng & câu trong bộ</p>
+            <p class="text-xs font-semibold text-slate-400">{{ currentWords.length }} từ vựng sẵn sàng</p>
           </div>
         </div>
 
@@ -40,7 +40,18 @@
           <div class="h-16 w-16 animate-spin rounded-full border-4 border-slate-100 border-t-indigo-600"></div>
           <span class="absolute text-2xl">📚</span>
         </div>
-        <p class="mt-4 font-bold text-slate-400">Đang chuẩn bị bài học...</p>
+        <p class="mt-4 font-bold text-slate-400">Đang tải dữ liệu từ CSDL...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div v-else-if="!currentWords.length" class="rounded-3xl border-2 border-rose-100 bg-rose-50/60 p-8 text-center shadow-sm">
+        <p class="font-bold text-rose-600">Chủ đề này chưa có từ vựng nào trong CSDL!</p>
+        <button 
+          @click="goBack" 
+          class="mt-4 rounded-xl border-b-4 border-indigo-700 bg-indigo-600 px-5 py-2 text-xs font-black text-white hover:bg-indigo-500 cursor-pointer"
+        >
+          Quay lại
+        </button>
       </div>
 
       <!-- Exercise Area -->
@@ -63,35 +74,20 @@
 
         <!-- Finished Screen -->
         <div v-if="isFinished" class="rounded-[32px] border-2 border-slate-100 bg-white p-8 text-center shadow-xl shadow-slate-200/50 sm:p-12">
-          <!-- Trường hợp: ĐÚNG 100% -->
-          <div v-if="isPassed">
-            <div class="mx-auto mb-5 flex h-24 w-24 items-center justify-center rounded-full bg-emerald-50 text-5xl shadow-inner ring-8 ring-emerald-50/50 animate-bounce">
-              🎉
-            </div>
-            <h2 class="text-3xl font-black text-slate-800">Xuất sắc! Hoàn thành bài học</h2>
-            <p class="mt-2 text-base font-medium text-slate-500">
-              Bạn đã trả lời đúng tuyệt đối <span class="font-extrabold text-emerald-600 text-lg">{{ totalCorrect }}/{{ lessonQueue.length }}</span> câu. Bài học đã được lưu tiến độ!
-            </p>
+          <div class="mx-auto mb-5 flex h-24 w-24 items-center justify-center rounded-full bg-emerald-50 text-5xl shadow-inner ring-8 ring-emerald-50/50 animate-bounce">
+            🎉
           </div>
+          <h2 class="text-3xl font-black text-slate-800">Hoàn thành bài học!</h2>
+          <p class="mt-2 text-base font-medium text-slate-500">
+            Bạn đã vượt qua tất cả câu hỏi trong bài! Tiến độ đã được ghi nhận vào CSDL.
+          </p>
 
-          <!-- Trường hợp: CHƯA ĐÚNG HẾT -->
-          <div v-else>
-            <div class="mx-auto mb-5 flex h-24 w-24 items-center justify-center rounded-full bg-amber-50 text-5xl shadow-inner ring-8 ring-amber-50/50">
-              💪
-            </div>
-            <h2 class="text-3xl font-black text-slate-800">Cố gắng thêm một chút nữa!</h2>
-            <p class="mt-2 text-base font-medium text-slate-500">
-              Bạn đã trả lời đúng <span class="font-extrabold text-amber-600 text-lg">{{ totalCorrect }}/{{ lessonQueue.length }}</span> câu. Bạn cần trả lời đúng 100% câu hỏi để hoàn thành bài này.
-            </p>
-          </div>
-
-          <!-- Action Buttons -->
           <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <button 
               @click="resetLessonFlow" 
               class="rounded-2xl border-b-4 border-indigo-800 bg-indigo-600 px-7 py-3.5 font-black text-white shadow-lg shadow-indigo-100 transition hover:bg-indigo-500 active:border-b-0 active:translate-y-1 cursor-pointer"
             >
-              {{ isPassed ? 'Ôn tập lại' : 'Thử lại để hoàn thành' }}
+              Làm lại bài học
             </button>
             <button 
               @click="goBack" 
@@ -224,7 +220,7 @@
       v-if="!isFinished && (showResult || (currentExercise && currentExercise.showResult))" 
       :class="[
         'fixed bottom-0 left-0 right-0 z-50 border-t-2 bg-white/95 px-4 py-4 shadow-2xl backdrop-blur-md transition-all sm:px-8',
-        (isCorrectAnswer || (currentExercise && currentExercise.isCorrect)) 
+        isCurrentAnswerCorrect 
           ? 'border-emerald-200 bg-emerald-50/90 text-emerald-950' 
           : 'border-rose-200 bg-rose-50/90 text-rose-950'
       ]"
@@ -233,15 +229,15 @@
         <div class="flex items-center gap-3">
           <div :class="[
             'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-2xl',
-            (isCorrectAnswer || (currentExercise && currentExercise.isCorrect)) ? 'bg-emerald-100' : 'bg-rose-100'
+            isCurrentAnswerCorrect ? 'bg-emerald-100' : 'bg-rose-100'
           ]">
-            {{ (isCorrectAnswer || (currentExercise && currentExercise.isCorrect)) ? '🎉' : '💡' }}
+            {{ isCurrentAnswerCorrect ? '🎉' : '💡' }}
           </div>
           <div>
             <h4 class="text-lg font-black">
-              {{ (isCorrectAnswer || (currentExercise && currentExercise.isCorrect)) ? 'Chính xác! Làm rất tốt.' : 'Chưa đúng rồi!' }}
+              {{ isCurrentAnswerCorrect ? 'Chính xác! Làm rất tốt.' : 'Chưa đúng rồi, câu này sẽ xuất hiện lại ở cuối!' }}
             </h4>
-            <p v-if="!(isCorrectAnswer || (currentExercise && currentExercise.isCorrect))" class="text-xs font-semibold sm:text-sm text-rose-800">
+            <p v-if="!isCurrentAnswerCorrect" class="text-xs font-semibold sm:text-sm text-rose-800">
               Đáp án đúng là: <span class="font-bold underline">{{ currentExercise.type === 'sentence' ? currentExercise.correctAnswer : currentExercise.options[currentExercise.correct] }}</span>
             </p>
           </div>
@@ -251,7 +247,7 @@
           @click="nextExercise" 
           :class="[
             'rounded-2xl border-b-4 px-8 py-3 text-center text-sm font-black text-white shadow-md transition active:border-b-0 active:translate-y-1 sm:w-auto cursor-pointer',
-            (isCorrectAnswer || (currentExercise && currentExercise.isCorrect)) 
+            isCurrentAnswerCorrect 
               ? 'border-emerald-700 bg-emerald-600 hover:bg-emerald-500' 
               : 'border-rose-700 bg-rose-600 hover:bg-rose-500'
           ]"
@@ -265,100 +261,6 @@
 
 <script>
 import axios from 'axios';
-
-const DECK_FALLBACKS = {
-  4: {
-    title: 'Gia đình',
-    words: [
-      { id: 1, term: 'family', vietnamese_meaning: 'gia đình' },
-      { id: 2, term: 'mother', vietnamese_meaning: 'mẹ' },
-      { id: 3, term: 'father', vietnamese_meaning: 'bố, cha' },
-      { id: 4, term: 'sister', vietnamese_meaning: 'chị/em gái' },
-      { id: 5, term: 'brother', vietnamese_meaning: 'anh/em trai' },
-      { id: 19, term: 'grandfather', vietnamese_meaning: 'ông' },
-      { id: 20, term: 'grandmother', vietnamese_meaning: 'bà' }
-    ],
-    sentences: [
-      { id: 1, english: 'I love my family.', vietnamese: 'Tôi yêu gia đình của tôi.' },
-      { id: 2, english: 'My mother is a teacher.', vietnamese: 'Mẹ tôi là một giáo viên.' },
-      { id: 4, english: 'She has a younger sister.', vietnamese: 'Cô ấy có một người em gái.' }
-    ]
-  },
-  5: {
-    title: 'Màu sắc',
-    words: [
-      { id: 6, term: 'red', vietnamese_meaning: 'màu đỏ' },
-      { id: 7, term: 'blue', vietnamese_meaning: 'màu xanh da trời' },
-      { id: 8, term: 'green', vietnamese_meaning: 'màu xanh lá cây' },
-      { id: 9, term: 'yellow', vietnamese_meaning: 'màu vàng' },
-      { id: 24, term: 'black', vietnamese_meaning: 'màu đen' },
-      { id: 25, term: 'white', vietnamese_meaning: 'màu trắng' }
-    ],
-    sentences: [
-      { id: 3, english: 'His father drives a blue car.', vietnamese: 'Bố của anh ấy lái một chiếc xe màu xanh.' },
-      { id: 5, english: 'The red apple is very sweet.', vietnamese: 'Quả táo màu đỏ rất ngọt.' },
-      { id: 10, english: 'The night sky is completely black.', vietnamese: 'Bầu trời đêm hoàn toàn là màu đen.' }
-    ]
-  },
-  6: {
-    title: 'Động vật',
-    words: [
-      { id: 10, term: 'dog', vietnamese_meaning: 'con chó' },
-      { id: 11, term: 'cat', vietnamese_meaning: 'con mèo' },
-      { id: 12, term: 'lion', vietnamese_meaning: 'con sư tử' },
-      { id: 13, term: 'tiger', vietnamese_meaning: 'con hổ' },
-      { id: 29, term: 'elephant', vietnamese_meaning: 'con voi' },
-      { id: 30, term: 'monkey', vietnamese_meaning: 'con khỉ' }
-    ],
-    sentences: [
-      { id: 14, english: 'The elephant is the largest land animal.', vietnamese: 'Con voi là loài động vật trên cạn lớn nhất.' },
-      { id: 15, english: 'A monkey is climbing the tall tree.', vietnamese: 'Một con khỉ đang leo trèo trên cái cây cao.' }
-    ]
-  },
-  7: {
-    title: 'Thức ăn',
-    words: [
-      { id: 14, term: 'bread', vietnamese_meaning: 'bánh mì' },
-      { id: 15, term: 'rice', vietnamese_meaning: 'cơm, gạo' },
-      { id: 16, term: 'water', vietnamese_meaning: 'nước' },
-      { id: 17, term: 'coffee', vietnamese_meaning: 'cà phê' },
-      { id: 34, term: 'noodles', vietnamese_meaning: 'mì, bún, phở' },
-      { id: 35, term: 'meat', vietnamese_meaning: 'thịt' }
-    ],
-    sentences: [
-      { id: 18, english: 'I usually have a bowl of noodles for breakfast.', vietnamese: 'Tôi thường ăn một bát mì vào bữa sáng.' },
-      { id: 19, english: 'He does not eat red meat.', vietnamese: 'Anh ấy không ăn thịt đỏ.' }
-    ]
-  },
-  8: {
-    title: 'Công việc',
-    words: [
-      { id: 39, term: 'doctor', vietnamese_meaning: 'bác sĩ' },
-      { id: 40, term: 'teacher', vietnamese_meaning: 'giáo viên' },
-      { id: 41, term: 'engineer', vietnamese_meaning: 'kỹ sư' },
-      { id: 42, term: 'developer', vietnamese_meaning: 'lập trình viên' },
-      { id: 43, term: 'nurse', vietnamese_meaning: 'y tá' }
-    ],
-    sentences: [
-      { id: 22, english: 'The doctor examined the patient carefully.', vietnamese: 'Bác sĩ đã khám cho bệnh nhân rất cẩn thận.' },
-      { id: 23, english: 'She wants to become a software engineer.', vietnamese: 'Cô ấy muốn trở thành một kỹ sư phần mềm.' }
-    ]
-  },
-  9: {
-    title: 'Cảm xúc',
-    words: [
-      { id: 44, term: 'happy', vietnamese_meaning: 'vui vẻ, hạnh phúc' },
-      { id: 45, term: 'sad', vietnamese_meaning: 'buồn bã' },
-      { id: 46, term: 'angry', vietnamese_meaning: 'tức giận' },
-      { id: 47, term: 'tired', vietnamese_meaning: 'mệt mỏi' },
-      { id: 48, term: 'excited', vietnamese_meaning: 'hào hứng, phấn khích' }
-    ],
-    sentences: [
-      { id: 26, english: 'They felt very happy after finishing the project.', vietnamese: 'Họ cảm thấy rất vui vẻ sau khi hoàn thành dự án.' },
-      { id: 27, english: 'I am feeling so tired after a long day of work.', vietnamese: 'Tôi đang cảm thấy rất mệt mỏi sau một ngày làm việc dài.' }
-    ]
-  }
-};
 
 export default {
   name: 'LearningView',
@@ -379,7 +281,6 @@ export default {
       currentStep: 0,
       selectedAnswer: null,
       showResult: false,
-      totalCorrect: 0,
       isPlaying: false,
       isFinished: false
     };
@@ -396,6 +297,13 @@ export default {
       if (!this.currentExercise) return false;
       return this.selectedAnswer === this.currentExercise.correct;
     },
+    isCurrentAnswerCorrect() {
+      if (!this.currentExercise) return false;
+      if (this.currentExercise.type === 'sentence') {
+        return !!this.currentExercise.isCorrect;
+      }
+      return this.isCorrectAnswer;
+    },
     resolvedDeckId() {
       return Number(this.deckId || (this.$route && this.$route.query && this.$route.query.deckId) || 4);
     },
@@ -406,93 +314,72 @@ export default {
       if (this.$route && this.$route.query && this.$route.query.deckTitle) {
         return this.$route.query.deckTitle;
       }
-      return DECK_FALLBACKS[this.resolvedDeckId]?.title || this.deckTitle || 'Bài học';
-    },
-    // Kiểm tra đã đúng 100% câu hỏi chưa
-    isPassed() {
-      return this.lessonQueue.length > 0 && this.totalCorrect === this.lessonQueue.length;
+      return this.deckTitle || 'Bài học';
     }
   },
   mounted() {
     this.fetchData();
   },
   methods: {
+    // 1. Tải 100% từ Database qua API Backend
     async fetchData() {
       try {
         this.loading = true;
         const deckId = this.resolvedDeckId;
 
-        // 1. Lấy từ vựng
-        try {
-          const wordsRes = await axios.get(`http://localhost:4000/api/vocab/decks/${deckId}/words`);
-          const apiWords = wordsRes.data?.data || wordsRes.data || [];
-          if (Array.isArray(apiWords) && apiWords.length > 0) {
-            this.currentWords = apiWords.map((word) => ({
-              id: word.id,
-              term: word.term,
-              vietnamese_meaning: word.vietnamese_meaning || word.definition || word.meaning || word.term,
-              audio_url: word.audio_url || null
-            }));
-          }
-        } catch {
-          console.warn('Không tải được words từ API, dùng fallback.');
-        }
+        // Gọi đồng thời cả Words và Sentences từ Database
+        const [wordsRes, sentencesRes] = await Promise.all([
+          axios.get(`http://localhost:4000/api/vocab/decks/${deckId}/words`),
+          axios.get(`http://localhost:4000/api/vocab/decks/${deckId}/sentences`)
+        ]);
 
-        // 2. Lấy câu luyện tập
-        try {
-          const sentencesRes = await axios.get(`http://localhost:4000/api/vocab/decks/${deckId}/sentences`);
-          const apiSentences = sentencesRes.data?.data || sentencesRes.data || [];
-          if (Array.isArray(apiSentences) && apiSentences.length > 0) {
-            this.currentSentences = apiSentences;
-          }
-        } catch {
-          console.warn('Không tải được sentences từ API, dùng fallback.');
-        }
+        const apiWords = wordsRes.data?.data || [];
+        this.currentWords = apiWords.map((word) => ({
+          id: word.id,
+          term: word.term,
+          vietnamese_meaning: word.vietnamese_meaning || word.definition || word.term,
+          audio_url: word.audio_url || null
+        }));
 
-        // 3. Fallback
-        const defaultDeckData = DECK_FALLBACKS[deckId] || DECK_FALLBACKS[4];
-        if (!this.currentWords.length) {
-          this.currentWords = [...defaultDeckData.words];
-        }
-        if (!this.currentSentences.length) {
-          this.currentSentences = [...defaultDeckData.sentences];
-        }
+        this.currentSentences = sentencesRes.data?.data || [];
 
         this.generateLessonFlow();
       } catch (error) {
-        console.error('Lỗi nạp dữ liệu bài học:', error);
-        this.generateLessonFlow();
+        console.error('Lỗi khi tải dữ liệu từ CSDL:', error);
       } finally {
         this.loading = false;
       }
     },
 
+    // 2. Tạo luồng câu hỏi theo từng bài học
     generateLessonFlow() {
-      const words = [...this.currentWords].slice(0, 6);
+      if (!this.currentWords.length) return;
+
+      const words = [...this.currentWords].sort(() => Math.random() - 0.5);
+      const targetPool = words.slice(0, 6);
       const queue = [];
 
-      while (words.length) {
-        const typePool = ['vocab', 'listening'];
-        const chosenType = typePool[Math.floor(Math.random() * typePool.length)];
-        const randomIndex = Math.floor(Math.random() * words.length);
-        const word = words[randomIndex];
-        queue.push(this.buildQuestionCard(chosenType, word));
-        words.splice(randomIndex, 1);
+      if (this.resolvedLessonId === 'new-1') {
+        // Bài 1: Khám phá từ mới
+        targetPool.forEach((w) => queue.push(this.buildQuestionCard('vocab', w)));
+      } else if (this.resolvedLessonId === 'new-2') {
+        // Bài 2: Luyện nghe phản xạ
+        targetPool.forEach((w) => queue.push(this.buildQuestionCard('listening', w)));
+      } else if (this.resolvedLessonId === 'review-1') {
+        // Bài 3: Ghép câu
+        const sentenceQs = this.generateSentenceQuestions();
+        queue.push(...sentenceQs);
+      } else {
+        // Bài 4: Tổng hợp
+        targetPool.slice(0, 4).forEach((w) => queue.push(this.buildQuestionCard('vocab', w)));
+        queue.push(...this.generateSentenceQuestions().slice(0, 2));
       }
-
-      const sentenceQuestions = this.generateSentenceQuestions();
-      queue.push(...sentenceQuestions.map((sentence) => ({
-        type: 'sentence',
-        typeLabel: 'Luyện câu',
-        ...sentence
-      })));
 
       this.lessonQueue = queue;
       this.currentStep = 0;
       this.selectedAnswer = null;
       this.showResult = false;
       this.isFinished = false;
-      this.totalCorrect = 0;
       this.score = 0;
     },
 
@@ -523,13 +410,15 @@ export default {
     },
 
     generateSentenceQuestions() {
-      const sentences = this.currentSentences.slice(0, 3);
+      const sentences = this.currentSentences.slice(0, 4);
 
       return sentences.map((item) => {
         const cleanEnglish = (item.english || '').trim().replace(/[.?!]$/, '');
         const wordList = cleanEnglish.split(/\s+/).filter(Boolean);
 
         return {
+          type: 'sentence',
+          typeLabel: 'Ghép câu',
           viPrompt: item.vietnamese || '',
           correctAnswer: cleanEnglish,
           availableWords: [...wordList].sort(() => Math.random() - 0.5),
@@ -546,14 +435,43 @@ export default {
       this.showResult = true;
 
       const exercise = this.currentExercise;
-      if (exercise && index === exercise.correct) {
-        exercise.isCorrect = true;
-        this.totalCorrect += 1;
-        this.score += 10;
+      if (exercise) {
+        exercise.selectedAnswer = index;
+        exercise.showResult = true;
+        if (index === exercise.correct) {
+          exercise.isCorrect = true;
+          this.score += 10;
+        } else {
+          exercise.isCorrect = false;
+        }
       }
     },
 
     async nextExercise() {
+      const currentEx = this.currentExercise;
+
+      // NẾU LÀM SAI -> ĐẨY VỀ CUỐI HÀNG ĐỢI
+      if (currentEx && !this.isCurrentAnswerCorrect) {
+        if (currentEx.type === 'sentence') {
+          const wordList = currentEx.correctAnswer.split(/\s+/).filter(Boolean);
+          this.lessonQueue.push({
+            type: 'sentence',
+            typeLabel: 'Ghép câu (Làm lại)',
+            viPrompt: currentEx.viPrompt,
+            correctAnswer: currentEx.correctAnswer,
+            availableWords: [...wordList].sort(() => Math.random() - 0.5),
+            selectedWords: [],
+            showResult: false,
+            isCorrect: false
+          });
+        } else {
+          const newCard = this.buildQuestionCard(currentEx.type, currentEx.word);
+          newCard.typeLabel += ' (Làm lại)';
+          this.lessonQueue.push(newCard);
+        }
+      }
+
+      // CHUYỂN CÂU HOẶC HOÀN TẤT
       if (this.currentStep < this.lessonQueue.length - 1) {
         this.currentStep += 1;
         this.selectedAnswer = null;
@@ -561,13 +479,9 @@ export default {
         return;
       }
 
-      // Khi kết thúc tất cả câu hỏi
+      // KHI ĐÃ ĐÚNG HẾT TOÀN BỘ CÂU
       this.isFinished = true;
-
-      // CHỈ LƯU TIẾN ĐỘ KHI ĐÚNG 100% SỐ CÂU
-      if (this.isPassed) {
-        await this.saveLessonProgress();
-      }
+      await this.saveLessonProgress();
     },
 
     async saveLessonProgress() {
@@ -579,7 +493,7 @@ export default {
         });
         console.log(' Đã lưu hoàn thành bài học vào CSDL!');
       } catch (error) {
-        console.error(' Lỗi khi lưu tiến độ vào CSDL:', error);
+        console.error(' Lỗi khi lưu tiến độ bài học:', error);
       }
     },
 
@@ -587,7 +501,6 @@ export default {
       this.currentStep = 0;
       this.selectedAnswer = null;
       this.showResult = false;
-      this.totalCorrect = 0;
       this.score = 0;
       this.isFinished = false;
       this.generateLessonFlow();
@@ -652,7 +565,6 @@ export default {
       exercise.isCorrect = userAnswer.trim().toLowerCase() === exercise.correctAnswer.trim().toLowerCase();
       exercise.showResult = true;
       if (exercise.isCorrect) {
-        this.totalCorrect += 1;
         this.score += 15;
       }
     }
