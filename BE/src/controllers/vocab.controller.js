@@ -54,74 +54,73 @@ const getDecks = async (req, res) => {
 // 3. Lấy danh sách từ vựng thuộc Deck (Loại bỏ audio_url, xáo trộn ngẫu nhiên)
 const getWordsByDeck = async (req, res) => {
   try {
-    const deckId = parseInt(req.params.deckId, 10);
-    if (!Number.isInteger(deckId) || deckId <= 0) {
-      return res.status(400).json({
-       success: false,
-       message: 'deckId không hợp lệ'
-      });
-    }
-
+    const { deckId } = req.params;
     const [words] = await pool.execute(
-      `SELECT DISTINCT
-       w.id,
-       w.term,
-       w.vietnamese_meaning AS definition,
-       w.vietnamese_meaning,
-       w.audio_url,
-       dw.deck_id
-       FROM words w
-       JOIN deck_words dw ON w.id = dw.word_id
+      `SELECT 
+        w.id, 
+        w.term, 
+        w.vietnamese_meaning AS definition, 
+        w.vietnamese_meaning, 
+        dw.deck_id 
+       FROM words w 
+       JOIN deck_words dw ON w.id = dw.word_id 
        WHERE dw.deck_id = ?
-       ORDER BY w.id ASC`,
+       ORDER BY RAND()`,
       [deckId]
     );
-
     return res.status(200).json({ success: true, data: words });
   } catch (error) {
     console.error('Lỗi tại getWordsByDeck:', error);
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Lỗi server khi lấy danh sách từ trong deck'
+    return res.status(500).json({ 
+      success: false, 
+      message: error.message || 'Lỗi server khi lấy danh sách từ trong deck' 
     });
   }
 };
 
-// 4. Lấy danh sách câu mẫu đúng theo chủ đề / deck
+// 4. Lấy danh sách câu mẫu
 const getSentencesByDeck = async (req, res) => {
   try {
     const deckId = parseInt(req.params.deckId, 10);
-    const limit = parseInt(req.query.limit, 10);
-    const safeLimit = Number.isInteger(limit) && limit > 0 ? Math.min(limit, 50) : 6;
+    const limit = parseInt(req.query.limit, 10) || 6;
 
-    if (!Number.isInteger(deckId) || deckId <= 0) {
-      return res.status(400).json({
-       success: false,
-       message: 'deckId không hợp lệ'
-      });
-    }
-
-    const [sentences] = await pool.execute(
-      `SELECT DISTINCT
-         s.id,
-         s.english,
-         s.vietnamese,
-         s.difficulty_level
+    // 1. Truy vấn câu theo Deck (Ghép limit trực tiếp dạng số an toàn)
+    let [sentences] = await pool.execute(
+      `SELECT DISTINCT 
+         s.id, 
+         s.english, 
+         s.vietnamese, 
+         s.difficulty_level 
        FROM sentences s
        JOIN word_sentences ws ON s.id = ws.sentence_id
        JOIN deck_words dw ON ws.word_id = dw.word_id
        WHERE dw.deck_id = ?
        ORDER BY RAND()
-       LIMIT ?`,
-      [deckId, safeLimit]
+       LIMIT ${limit}`,
+      [deckId]
     );
 
-    return res.status(200).json({ success: true, data: sentences || [] });
+    // 2. Fallback nếu chưa có câu gán
+    if (!sentences.length) {
+      const [allSentences] = await pool.execute(
+        `SELECT 
+           id, 
+           english, 
+           vietnamese, 
+           difficulty_level 
+         FROM sentences 
+         ORDER BY RAND() 
+         LIMIT ${limit}`
+      );
+      sentences = allSentences;
+    }
+
+    return res.status(200).json({ success: true, data: sentences });
   } catch (error) {
     console.error('Lỗi tại getSentencesByDeck:', error);
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Lỗi server khi lấy danh sách câu mẫu'
+    return res.status(500).json({ 
+      success: false, 
+      message: error.message || 'Lỗi server khi lấy danh sách câu mẫu' 
     });
   }
 };
