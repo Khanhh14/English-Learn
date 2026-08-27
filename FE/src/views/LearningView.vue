@@ -6,7 +6,7 @@
         <div class="flex items-center gap-3">
           <button 
             @click="goBack" 
-            class="flex h-10 w-10 items-center justify-center rounded-2xl border-2 border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 active:translate-y-0.5"
+            class="flex h-10 w-10 items-center justify-center rounded-2xl border-2 border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 active:translate-y-0.5 cursor-pointer"
             title="Quay lại"
           >
             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -46,7 +46,7 @@
       <!-- Exercise Area -->
       <div v-else class="space-y-6">
         <!-- Progress Bar Header -->
-        <div class="space-y-2.5">
+        <div v-if="!isFinished" class="space-y-2.5">
           <div class="flex items-center justify-between text-xs font-black tracking-wider uppercase">
             <span class="rounded-xl bg-indigo-50 px-3 py-1 text-indigo-600 ring-1 ring-indigo-500/10">
               {{ currentExercise?.typeLabel || 'Bài học' }}
@@ -63,23 +63,39 @@
 
         <!-- Finished Screen -->
         <div v-if="isFinished" class="rounded-[32px] border-2 border-slate-100 bg-white p-8 text-center shadow-xl shadow-slate-200/50 sm:p-12">
-          <div class="mx-auto mb-5 flex h-24 w-24 items-center justify-center rounded-full bg-amber-50 text-5xl shadow-inner ring-8 ring-amber-50/50 animate-bounce">
-            🎉
+          <!-- Trường hợp: ĐÚNG 100% -->
+          <div v-if="isPassed">
+            <div class="mx-auto mb-5 flex h-24 w-24 items-center justify-center rounded-full bg-emerald-50 text-5xl shadow-inner ring-8 ring-emerald-50/50 animate-bounce">
+              🎉
+            </div>
+            <h2 class="text-3xl font-black text-slate-800">Xuất sắc! Hoàn thành bài học</h2>
+            <p class="mt-2 text-base font-medium text-slate-500">
+              Bạn đã trả lời đúng tuyệt đối <span class="font-extrabold text-emerald-600 text-lg">{{ totalCorrect }}/{{ lessonQueue.length }}</span> câu. Bài học đã được lưu tiến độ!
+            </p>
           </div>
-          <h2 class="text-3xl font-black text-slate-800">Hoàn thành bài học!</h2>
-          <p class="mt-2 text-base font-medium text-slate-500">
-            Bạn đã trả lời đúng <span class="font-extrabold text-emerald-600 text-lg">{{ totalCorrect }}</span> / {{ lessonQueue.length }} câu.
-          </p>
+
+          <!-- Trường hợp: CHƯA ĐÚNG HẾT -->
+          <div v-else>
+            <div class="mx-auto mb-5 flex h-24 w-24 items-center justify-center rounded-full bg-amber-50 text-5xl shadow-inner ring-8 ring-amber-50/50">
+              💪
+            </div>
+            <h2 class="text-3xl font-black text-slate-800">Cố gắng thêm một chút nữa!</h2>
+            <p class="mt-2 text-base font-medium text-slate-500">
+              Bạn đã trả lời đúng <span class="font-extrabold text-amber-600 text-lg">{{ totalCorrect }}/{{ lessonQueue.length }}</span> câu. Bạn cần trả lời đúng 100% câu hỏi để hoàn thành bài này.
+            </p>
+          </div>
+
+          <!-- Action Buttons -->
           <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <button 
               @click="resetLessonFlow" 
-              class="rounded-2xl border-b-4 border-indigo-800 bg-indigo-600 px-7 py-3.5 font-black text-white shadow-lg shadow-indigo-100 transition hover:bg-indigo-500 active:border-b-0 active:translate-y-1"
+              class="rounded-2xl border-b-4 border-indigo-800 bg-indigo-600 px-7 py-3.5 font-black text-white shadow-lg shadow-indigo-100 transition hover:bg-indigo-500 active:border-b-0 active:translate-y-1 cursor-pointer"
             >
-              Làm lại bài học
+              {{ isPassed ? 'Ôn tập lại' : 'Thử lại để hoàn thành' }}
             </button>
             <button 
               @click="goBack" 
-              class="rounded-2xl border-2 border-b-4 border-slate-200 bg-white px-7 py-3.5 font-black text-slate-700 transition hover:bg-slate-50 active:border-b-2 active:translate-y-0.5"
+              class="rounded-2xl border-2 border-b-4 border-slate-200 bg-white px-7 py-3.5 font-black text-slate-700 transition hover:bg-slate-50 active:border-b-2 active:translate-y-0.5 cursor-pointer"
             >
               Trở về danh sách
             </button>
@@ -100,7 +116,7 @@
                 <button 
                   @click="playPronunciation(currentExercise.audioTargetText, currentExercise.audioUrl)" 
                   :class="[
-                    'group flex h-24 w-24 items-center justify-center rounded-3xl border-b-4 transition-all active:translate-y-1 active:border-b-0 shadow-md',
+                    'group flex h-24 w-24 items-center justify-center rounded-3xl border-b-4 transition-all active:translate-y-1 active:border-b-0 shadow-md cursor-pointer',
                     isPlaying 
                       ? 'border-indigo-800 bg-indigo-600 text-white animate-pulse' 
                       : 'border-indigo-300 bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
@@ -126,7 +142,7 @@
                 @click="selectAnswer(idx)"
                 :disabled="showResult"
                 :class="[
-                  'group flex items-center gap-3.5 rounded-2xl border-2 border-b-4 p-4 text-left font-bold transition-all active:border-b-2 active:translate-y-0.5',
+                  'group flex items-center gap-3.5 rounded-2xl border-2 border-b-4 p-4 text-left font-bold transition-all active:border-b-2 active:translate-y-0.5 cursor-pointer',
                   !showResult && selectedAnswer !== idx ? 'border-slate-200 bg-white text-slate-700 hover:border-indigo-300 hover:bg-indigo-50/30' : '',
                   selectedAnswer === idx && !showResult ? 'border-indigo-600 bg-indigo-50 text-indigo-900 border-b-indigo-700' : '',
                   showResult && currentExercise.correct === idx ? 'border-emerald-500 bg-emerald-50 text-emerald-900 border-b-emerald-600' : '',
@@ -164,7 +180,7 @@
                   @click="removeSentenceWord(index)" 
                   type="button" 
                   :disabled="currentExercise.showResult"
-                  class="rounded-xl border-2 border-b-4 border-indigo-700 bg-indigo-600 px-4 py-2.5 text-sm font-extrabold text-white shadow-sm transition hover:bg-indigo-500 active:border-b-2 active:translate-y-0.5"
+                  class="rounded-xl border-2 border-b-4 border-indigo-700 bg-indigo-600 px-4 py-2.5 text-sm font-extrabold text-white shadow-sm transition hover:bg-indigo-500 active:border-b-2 active:translate-y-0.5 cursor-pointer"
                 >
                   {{ word }}
                 </button>
@@ -182,7 +198,7 @@
                 @click="selectSentenceWord(index)" 
                 type="button" 
                 :disabled="currentExercise.showResult"
-                class="rounded-xl border-2 border-b-4 border-slate-200 bg-white px-4 py-2.5 text-sm font-extrabold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 active:border-b-2 active:translate-y-0.5"
+                class="rounded-xl border-2 border-b-4 border-slate-200 bg-white px-4 py-2.5 text-sm font-extrabold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 active:border-b-2 active:translate-y-0.5 cursor-pointer"
               >
                 {{ word }}
               </button>
@@ -193,7 +209,7 @@
               <button 
                 @click="checkSentenceAnswer" 
                 :disabled="!currentExercise.selectedWords.length"
-                class="w-full rounded-2xl border-b-4 border-indigo-800 bg-indigo-600 py-3.5 text-center font-black text-white shadow-lg shadow-indigo-100 transition hover:bg-indigo-500 active:border-b-0 active:translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:border-b-0"
+                class="w-full rounded-2xl border-b-4 border-indigo-800 bg-indigo-600 py-3.5 text-center font-black text-white shadow-lg shadow-indigo-100 transition hover:bg-indigo-500 active:border-b-0 active:translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:border-b-0 cursor-pointer"
               >
                 Kiểm tra đáp án
               </button>
@@ -205,7 +221,7 @@
 
     <!-- Bottom Result Feedback Bar -->
     <footer 
-      v-if="showResult || (currentExercise && currentExercise.showResult)" 
+      v-if="!isFinished && (showResult || (currentExercise && currentExercise.showResult))" 
       :class="[
         'fixed bottom-0 left-0 right-0 z-50 border-t-2 bg-white/95 px-4 py-4 shadow-2xl backdrop-blur-md transition-all sm:px-8',
         (isCorrectAnswer || (currentExercise && currentExercise.isCorrect)) 
@@ -234,7 +250,7 @@
         <button 
           @click="nextExercise" 
           :class="[
-            'rounded-2xl border-b-4 px-8 py-3 text-center text-sm font-black text-white shadow-md transition active:border-b-0 active:translate-y-1 sm:w-auto',
+            'rounded-2xl border-b-4 px-8 py-3 text-center text-sm font-black text-white shadow-md transition active:border-b-0 active:translate-y-1 sm:w-auto cursor-pointer',
             (isCorrectAnswer || (currentExercise && currentExercise.isCorrect)) 
               ? 'border-emerald-700 bg-emerald-600 hover:bg-emerald-500' 
               : 'border-rose-700 bg-rose-600 hover:bg-rose-500'
@@ -250,7 +266,6 @@
 <script>
 import axios from 'axios';
 
-// Dữ liệu chuẩn theo 6 bộ deck (Deck 4 -> 9)
 const DECK_FALLBACKS = {
   4: {
     title: 'Gia đình',
@@ -349,8 +364,10 @@ export default {
   name: 'LearningView',
   props: {
     deckId: { type: [Number, String], default: null },
+    lessonId: { type: String, default: 'new-1' },
     deckTitle: { type: String, default: 'Bài học' },
-    streak: { type: Number, default: 3 }
+    streak: { type: Number, default: 3 },
+    userId: { type: [Number, String], default: 1 }
   },
   data() {
     return {
@@ -382,11 +399,18 @@ export default {
     resolvedDeckId() {
       return Number(this.deckId || (this.$route && this.$route.query && this.$route.query.deckId) || 4);
     },
+    resolvedLessonId() {
+      return this.lessonId || (this.$route && this.$route.query && this.$route.query.lessonId) || 'new-1';
+    },
     effectiveDeckTitle() {
       if (this.$route && this.$route.query && this.$route.query.deckTitle) {
         return this.$route.query.deckTitle;
       }
       return DECK_FALLBACKS[this.resolvedDeckId]?.title || this.deckTitle || 'Bài học';
+    },
+    // Kiểm tra đã đúng 100% câu hỏi chưa
+    isPassed() {
+      return this.lessonQueue.length > 0 && this.totalCorrect === this.lessonQueue.length;
     }
   },
   mounted() {
@@ -398,7 +422,7 @@ export default {
         this.loading = true;
         const deckId = this.resolvedDeckId;
 
-        // 1. Lấy từ vựng theo deck
+        // 1. Lấy từ vựng
         try {
           const wordsRes = await axios.get(`http://localhost:4000/api/vocab/decks/${deckId}/words`);
           const apiWords = wordsRes.data?.data || wordsRes.data || [];
@@ -411,10 +435,10 @@ export default {
             }));
           }
         } catch {
-          console.warn('Không tải được words từ API, sử dụng dữ liệu fallback theo Deck ID.');
+          console.warn('Không tải được words từ API, dùng fallback.');
         }
 
-        // 2. Lấy câu luyện tập theo deck
+        // 2. Lấy câu luyện tập
         try {
           const sentencesRes = await axios.get(`http://localhost:4000/api/vocab/decks/${deckId}/sentences`);
           const apiSentences = sentencesRes.data?.data || sentencesRes.data || [];
@@ -422,10 +446,10 @@ export default {
             this.currentSentences = apiSentences;
           }
         } catch {
-          console.warn('Không tải được sentences từ API, sử dụng dữ liệu fallback theo Deck ID.');
+          console.warn('Không tải được sentences từ API, dùng fallback.');
         }
 
-        // 3. Sử dụng fallback tương ứng theo Deck nếu API rỗng
+        // 3. Fallback
         const defaultDeckData = DECK_FALLBACKS[deckId] || DECK_FALLBACKS[4];
         if (!this.currentWords.length) {
           this.currentWords = [...defaultDeckData.words];
@@ -436,7 +460,7 @@ export default {
 
         this.generateLessonFlow();
       } catch (error) {
-        console.error('Lỗi khi nạp dữ liệu bài học:', error);
+        console.error('Lỗi nạp dữ liệu bài học:', error);
         this.generateLessonFlow();
       } finally {
         this.loading = false;
@@ -529,7 +553,7 @@ export default {
       }
     },
 
-    nextExercise() {
+    async nextExercise() {
       if (this.currentStep < this.lessonQueue.length - 1) {
         this.currentStep += 1;
         this.selectedAnswer = null;
@@ -537,7 +561,26 @@ export default {
         return;
       }
 
+      // Khi kết thúc tất cả câu hỏi
       this.isFinished = true;
+
+      // CHỈ LƯU TIẾN ĐỘ KHI ĐÚNG 100% SỐ CÂU
+      if (this.isPassed) {
+        await this.saveLessonProgress();
+      }
+    },
+
+    async saveLessonProgress() {
+      try {
+        await axios.post('http://localhost:4000/api/vocab-progress/complete-lesson', {
+          userId: this.userId || 1,
+          deckId: this.resolvedDeckId,
+          lessonId: this.resolvedLessonId
+        });
+        console.log(' Đã lưu hoàn thành bài học vào CSDL!');
+      } catch (error) {
+        console.error(' Lỗi khi lưu tiến độ vào CSDL:', error);
+      }
     },
 
     resetLessonFlow() {
