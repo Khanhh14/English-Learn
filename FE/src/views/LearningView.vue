@@ -79,7 +79,13 @@
           </div>
           <h2 class="text-3xl font-black text-slate-800">Hoàn thành bài học!</h2>
           <p class="mt-2 text-base font-medium text-slate-500">
-            Bạn đã vượt qua tất cả câu hỏi trong bài! Tiến độ đã được ghi nhận vào CSDL.
+            Bạn đã vượt qua tất cả câu hỏi trong bài!
+          </p>
+          <p v-if="progressSaved" class="mt-2 text-sm font-bold text-emerald-600">
+            Tiến độ đã được ghi nhận vào CSDL.
+          </p>
+          <p v-else-if="progressSaveError" class="mt-2 text-sm font-bold text-rose-600">
+            {{ progressSaveError }}
           </p>
 
           <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
@@ -283,7 +289,9 @@ export default {
       selectedAnswer: null,
       showResult: false,
       isPlaying: false,
-      isFinished: false
+      isFinished: false,
+      progressSaved: false,
+      progressSaveError: ''
     };
   },
   computed: {
@@ -385,6 +393,8 @@ export default {
       this.showResult = false;
       this.isFinished = false;
       this.score = 0;
+      this.progressSaved = false;
+      this.progressSaveError = '';
     },
 
     getLessonWords() {
@@ -500,14 +510,21 @@ export default {
 
     async saveLessonProgress() {
       try {
-        await axios.post('http://localhost:4000/api/vocab-progress/complete-lesson', {
+        const response = await axios.post('http://localhost:4000/api/vocab-progress/complete-lesson', {
           userId: this.resolvedUserId,
           deckId: this.resolvedDeckId,
           lessonId: this.resolvedLessonId
         });
-        console.log(' Đã lưu hoàn thành bài học vào CSDL!');
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Máy chủ không xác nhận lưu tiến độ');
+        }
+        this.progressSaved = true;
+        this.progressSaveError = '';
       } catch (error) {
-        console.error(' Lỗi khi lưu tiến độ bài học:', error);
+        console.error('Lỗi khi lưu tiến độ bài học:', error);
+        this.progressSaved = false;
+        this.progressSaveError =
+          error.response?.data?.message || 'Không thể lưu tiến độ vào CSDL. Vui lòng thử lại.';
       }
     },
 
@@ -517,6 +534,8 @@ export default {
       this.showResult = false;
       this.score = 0;
       this.isFinished = false;
+      this.progressSaved = false;
+      this.progressSaveError = '';
       this.generateLessonFlow();
     },
 
