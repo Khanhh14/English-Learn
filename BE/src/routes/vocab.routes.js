@@ -8,8 +8,4 @@ router.get('/decks/:deckId/words', vocabController.getWordsByDeck);
 router.get('/decks/:deckId/sentences', vocabController.getSentencesByDeck);
 router.get('/words/:term', vocabController.getWordDetail);
 
-// Progress
-router.get('/user-progress', vocabController.getUserProgress);
-router.post('/complete-lesson', vocabController.completeLesson);
-
 module.exports = router;

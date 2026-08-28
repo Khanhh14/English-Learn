@@ -51,11 +51,14 @@
               v-for="(chapter, idx) in chapters"
               :key="chapter.id"
               @click="selectChapter(chapter.id)"
+              :disabled="!isChapterUnlocked(chapter, idx)"
               :class="[
                 'group relative flex flex-col items-center justify-center rounded-2xl border-2 p-4 text-center transition-all active:translate-y-0.5 cursor-pointer',
                 selectedChapterId === chapter.id
                   ? 'border-indigo-600 bg-indigo-50/40 border-b-4 shadow-sm'
-                  : 'border-slate-200/80 bg-white hover:border-slate-300 hover:bg-slate-50'
+                  : isChapterUnlocked(chapter, idx)
+                    ? 'border-slate-200/80 bg-white hover:border-slate-300 hover:bg-slate-50'
+                    : 'border-slate-200/80 bg-slate-100/70 opacity-60 cursor-not-allowed'
               ]"
             >
               <span 
@@ -66,6 +69,7 @@
               </span>
               <span class="text-sm font-extrabold text-slate-800 line-clamp-1">{{ chapter.name }}</span>
               <span class="mt-1 text-[11px] font-bold text-slate-400">{{ chapter.totalWords || 0 }} từ</span>
+              <span v-if="!isChapterUnlocked(chapter, idx)" class="mt-1 text-[10px] font-black text-slate-400">🔒 Hoàn thành chương trước</span>
             </button>
           </div>
         </div>
@@ -101,7 +105,9 @@
               @click="handleStartLesson(selectedChapter.id, lesson.id)"
               :class="[
                 'group relative flex flex-col justify-between gap-4 rounded-2xl border-2 bg-white p-4 transition-all sm:flex-row sm:items-center sm:p-5 cursor-pointer',
-                isLessonCompleted(selectedChapter.id, lesson.id)
+                !isLessonUnlocked(selectedChapter, lesson)
+                  ? 'border-slate-200 bg-slate-100/70 opacity-60 cursor-not-allowed'
+                  : isLessonCompleted(selectedChapter.id, lesson.id)
                   ? 'border-emerald-200/80 hover:border-emerald-400 hover:shadow-md'
                   : 'border-slate-100 hover:border-indigo-200 hover:shadow-md'
               ]"
@@ -111,12 +117,15 @@
                 <div 
                   :class="[
                     'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl font-black text-sm transition-all',
-                    isLessonCompleted(selectedChapter.id, lesson.id)
+                    !isLessonUnlocked(selectedChapter, lesson)
+                      ? 'bg-slate-200 text-slate-400'
+                      : isLessonCompleted(selectedChapter.id, lesson.id)
                       ? 'bg-emerald-500 text-white shadow-sm'
                       : 'bg-slate-100 text-slate-700 group-hover:bg-indigo-50 group-hover:text-indigo-600'
                   ]"
                 >
-                  <span v-if="isLessonCompleted(selectedChapter.id, lesson.id)">✓</span>
+                  <span v-if="!isLessonUnlocked(selectedChapter, lesson)">🔒</span>
+                  <span v-else-if="isLessonCompleted(selectedChapter.id, lesson.id)">✓</span>
                   <span v-else>{{ lesson.index }}</span>
                 </div>
 
@@ -125,7 +134,9 @@
                     <h4 
                       :class="[
                         'text-base font-extrabold transition-colors',
-                        isLessonCompleted(selectedChapter.id, lesson.id)
+                        !isLessonUnlocked(selectedChapter, lesson)
+                          ? 'text-slate-400'
+                          : isLessonCompleted(selectedChapter.id, lesson.id)
                           ? 'text-slate-800 group-hover:text-emerald-600'
                           : 'text-slate-800 group-hover:text-indigo-600'
                       ]"
@@ -150,6 +161,12 @@
                     >
                       Đã hoàn thành
                     </span>
+                    <span
+                      v-else-if="!isLessonUnlocked(selectedChapter, lesson)"
+                      class="rounded-md bg-slate-200 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-slate-500"
+                    >
+                      Đang khóa
+                    </span>
                   </div>
                   <p class="mt-0.5 text-xs font-semibold text-slate-400">
                     {{ lesson.description }}
@@ -163,8 +180,18 @@
                   {{ lesson.questions }} câu
                 </span>
 
+                <button
+                  v-if="!isLessonUnlocked(selectedChapter, lesson)"
+                  type="button"
+                  disabled
+                  class="flex items-center gap-1 rounded-xl bg-slate-200 px-5 py-2 text-xs font-black text-slate-500 cursor-not-allowed"
+                >
+                  <span>🔒</span>
+                  <span>Đã khóa</span>
+                </button>
+
                 <button 
-                  v-if="isLessonCompleted(selectedChapter.id, lesson.id)"
+                  v-else-if="isLessonCompleted(selectedChapter.id, lesson.id)"
                   type="button"
                   class="flex items-center gap-1 rounded-xl border-b-4 border-emerald-700 bg-emerald-600 px-5 py-2 text-xs font-black text-white shadow-xs transition hover:bg-emerald-500 active:border-b-0 active:translate-y-1 cursor-pointer"
                 >
@@ -231,6 +258,28 @@ export default {
       return this.completedLessonKeys.includes(`${chapterId}-${lessonId}`);
     },
 
+    isLessonUnlocked(chapter, lesson) {
+      if (!chapter || !lesson) return false;
+      if (chapter.chapterNumber > 1 && !this.isChapterUnlocked(chapter, chapter.chapterNumber - 1)) {
+        return false;
+      }
+
+      const lessonIndex = chapter.lessons.findIndex((item) => item.id === lesson.id);
+      if (lessonIndex <= 0) return true;
+      return chapter.lessons
+        .slice(0, lessonIndex)
+        .every((previousLesson) => this.isLessonCompleted(chapter.id, previousLesson.id));
+    },
+
+    isChapterUnlocked(chapter, chapterIndex = chapter?.chapterNumber - 1) {
+      if (!chapter || chapterIndex <= 0) return true;
+      const previousChapter = this.chapters[chapterIndex - 1];
+      if (!previousChapter) return false;
+      return previousChapter.lessons.every((lesson) =>
+        this.isLessonCompleted(previousChapter.id, lesson.id)
+      );
+    },
+
     // 2. Lấy dữ liệu tiến độ từ backend
     async fetchUserProgress() {
       try {
@@ -289,8 +338,12 @@ export default {
 
     // 4. Chọn chương
     async selectChapter(chapterId) {
+      const chapterIndex = this.chapters.findIndex((chapter) => chapter.id === chapterId);
+      const chapter = this.chapters[chapterIndex];
+      if (!this.isChapterUnlocked(chapter, chapterIndex)) return;
+
       this.selectedChapterId = chapterId;
-      this.selectedChapter = this.chapters.find((chapter) => chapter.id === chapterId) || null;
+      this.selectedChapter = chapter || null;
 
       if (!this.selectedChapter) return;
 
@@ -306,6 +359,10 @@ export default {
 
     // 5. Phát sự kiện bắt đầu học
     handleStartLesson(chapterId, lessonId) {
+      const chapter = this.chapters.find((item) => item.id === chapterId);
+      const lesson = chapter?.lessons.find((item) => item.id === lessonId);
+      if (!this.isLessonUnlocked(chapter, lesson)) return;
+
       this.$emit('start-learning', { 
         chapterId, 
         lessonId, 
