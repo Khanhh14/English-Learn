@@ -62,7 +62,7 @@
           <div class="dashboard-main flex-1 min-w-0 h-full">
             <div class="h-full overflow-hidden rounded-3xl bg-white/60 backdrop-blur-xl p-6 shadow-2xl border border-white/50">
               <div v-if="activeTab === 'learning'" class="h-full overflow-auto">
-                <LearningTab @start-learning="goToLearning" />
+                <LearningTab :user-id="user.id || 1" @start-learning="goToLearning" />
               </div>
 
               <div v-if="activeTab === 'practice'" class="h-full overflow-auto">
@@ -191,12 +191,14 @@ export default {
         return;
       }
 
-      const { chapterId, lessonType, chapterTitle } = payload || {};
+      const { chapterId, lessonId, lessonType, deckTitle } = payload || {};
       const params = {};
       if (chapterId !== undefined && chapterId !== null) params.deckId = chapterId;
 
       const query = {};
-      if (chapterTitle) query.deckTitle = chapterTitle;
+      if (lessonId) query.lessonId = lessonId;
+      if (deckTitle) query.deckTitle = deckTitle;
+      if (this.user.id) query.userId = this.user.id;
       if (lessonType) query.mode = lessonType;
 
       this.$router.push({ name: 'learning', params, query });

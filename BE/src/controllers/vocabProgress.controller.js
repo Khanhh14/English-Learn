@@ -1,5 +1,41 @@
 const db = require('../config/db'); // Đường dẫn tới file kết nối pool MySQL (mysql2/promise)
 
+const LESSON_SEQUENCE = ['new-1', 'new-2', 'review-1', 'summary'];
+
+async function hasCompletedLesson(userId, deckId, lessonId) {
+  const [rows] = await db.query(
+    `SELECT 1
+     FROM user_lesson_progress
+     WHERE user_id = ? AND deck_id = ? AND lesson_id = ? AND is_completed = 1
+     LIMIT 1`,
+    [userId, deckId, lessonId]
+  );
+  return rows.length > 0;
+}
+
+async function canCompleteLesson(userId, deckId, lessonId) {
+  const lessonIndex = LESSON_SEQUENCE.indexOf(lessonId);
+  if (lessonIndex < 0) return false;
+
+  if (lessonIndex > 0 && !(await hasCompletedLesson(userId, deckId, LESSON_SEQUENCE[lessonIndex - 1]))) {
+    return false;
+  }
+
+  const [decks] = await db.query(
+    `SELECT id
+     FROM decks
+     WHERE status = 'published'
+     ORDER BY id ASC`
+  );
+  const deckIndex = decks.findIndex((deck) => Number(deck.id) === Number(deckId));
+  if (deckIndex <= 0) return true;
+
+  const previousDeckId = decks[deckIndex - 1].id;
+  return LESSON_SEQUENCE.every((previousLessonId) =>
+    hasCompletedLesson(userId, previousDeckId, previousLessonId)
+  );
+}
+
 // [GET] /api/vocab/user-progress
 exports.getUserProgress = async (req, res) => {
   try {
@@ -40,6 +76,13 @@ exports.completeLesson = async (req, res) => {
       return res.status(400).json({ 
         success: false, 
         message: 'Thiếu deckId hoặc lessonId' 
+      });
+    }
+
+    if (!(await canCompleteLesson(userId, deckId, lessonId))) {
+      return res.status(409).json({
+        success: false,
+        message: 'Bạn cần hoàn thành bài học trước theo đúng lộ trình'
       });
     }
 
