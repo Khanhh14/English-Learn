@@ -79,7 +79,7 @@
           </div>
           <h2 class="text-3xl font-black text-slate-800">Hoàn thành bài học!</h2>
           <p class="mt-2 text-base font-medium text-slate-500">
-            Bạn đã vượt qua tất cả câu hỏi trong bài! Tiến độ đã được ghi nhận vào CSDL.
+            Bạn đã vượt qua tất cả câu hỏi trong bài!
           </p>
 
           <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
@@ -274,6 +274,7 @@ export default {
   data() {
     return {
       currentWords: [],
+      lessonWords: [],
       currentSentences: [],
       score: 0,
       loading: true,
@@ -308,13 +309,16 @@ export default {
       return Number(this.deckId || (this.$route && this.$route.query && this.$route.query.deckId) || 4);
     },
     resolvedLessonId() {
-      return this.lessonId || (this.$route && this.$route.query && this.$route.query.lessonId) || 'new-1';
+      return (this.$route && this.$route.query && this.$route.query.lessonId) || this.lessonId || 'new-1';
     },
     effectiveDeckTitle() {
       if (this.$route && this.$route.query && this.$route.query.deckTitle) {
         return this.$route.query.deckTitle;
       }
       return this.deckTitle || 'Bài học';
+    },
+    resolvedUserId() {
+      return (this.$route && this.$route.query && this.$route.query.userId) || this.userId || 1;
     }
   },
   mounted() {
@@ -355,8 +359,8 @@ export default {
     generateLessonFlow() {
       if (!this.currentWords.length) return;
 
-      const words = [...this.currentWords].sort(() => Math.random() - 0.5);
-      const targetPool = words.slice(0, 6);
+      const targetPool = this.getLessonWords();
+      this.lessonWords = targetPool;
       const queue = [];
 
       if (this.resolvedLessonId === 'new-1') {
@@ -383,10 +387,20 @@ export default {
       this.score = 0;
     },
 
+    getLessonWords() {
+      const words = [...this.currentWords].sort((a, b) => Number(a.id) - Number(b.id));
+      if (this.resolvedLessonId === 'new-1' || this.resolvedLessonId === 'new-2') {
+        const midpoint = Math.ceil(words.length / 2);
+        const start = this.resolvedLessonId === 'new-1' ? 0 : midpoint;
+        return words.slice(start, start + 6);
+      }
+      return words.sort(() => Math.random() - 0.5).slice(0, 6);
+    },
+
     buildQuestionCard(type, word) {
       const prompt = word.vietnamese_meaning || word.term;
       const correctWord = word.term;
-      const distractors = this.currentWords
+      const distractors = this.lessonWords
         .filter((candidate) => candidate.term !== correctWord)
         .map((candidate) => candidate.term)
         .sort(() => Math.random() - 0.5)
@@ -487,13 +501,12 @@ export default {
     async saveLessonProgress() {
       try {
         await axios.post('http://localhost:4000/api/vocab-progress/complete-lesson', {
-          userId: this.userId || 1,
+          userId: this.resolvedUserId,
           deckId: this.resolvedDeckId,
           lessonId: this.resolvedLessonId
         });
-        console.log(' Đã lưu hoàn thành bài học vào CSDL!');
       } catch (error) {
-        console.error(' Lỗi khi lưu tiến độ bài học:', error);
+        console.error('Lỗi khi lưu tiến độ bài học:', error);
       }
     },
 
