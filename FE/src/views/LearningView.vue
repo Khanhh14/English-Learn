@@ -27,7 +27,7 @@
           </div>
           <div class="flex items-center gap-1.5 rounded-2xl border-2 border-orange-200/80 bg-orange-50/80 px-3.5 py-1.5 text-xs font-black text-orange-700 shadow-xs sm:text-sm">
             <span>🔥</span>
-            <span>{{ streak }} <span class="text-[10px] font-bold uppercase sm:text-xs">ngày</span></span>
+            <span>{{ currentStreakCount }} <span class="text-[10px] font-bold uppercase sm:text-xs">ngày</span></span>
           </div>
         </div>
       </div>
@@ -79,7 +79,7 @@
           </div>
           <h2 class="text-3xl font-black text-slate-800">Hoàn thành bài học!</h2>
           <p class="mt-2 text-base font-medium text-slate-500">
-            Bạn đã vượt qua tất cả câu hỏi trong bài!
+            Bạn đã hoàn thành bài học và giữ vững chuỗi 🔥 <strong class="text-orange-600">{{ currentStreakCount }} ngày</strong>!
           </p>
 
           <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
@@ -268,7 +268,7 @@ export default {
     deckId: { type: [Number, String], default: null },
     lessonId: { type: String, default: 'new-1' },
     deckTitle: { type: String, default: 'Bài học' },
-    streak: { type: Number, default: 3 },
+    streak: { type: Number, default: 0 },
     userId: { type: [Number, String], default: 1 }
   },
   data() {
@@ -283,7 +283,12 @@ export default {
       selectedAnswer: null,
       showResult: false,
       isPlaying: false,
-      isFinished: false
+      isFinished: false,
+      
+      // Thống kê bài học để ghi nhận vào user_daily_stats
+      correctCount: 0,
+      wrongCount: 0,
+      currentStreakCount: this.streak
     };
   },
   computed: {
@@ -323,15 +328,27 @@ export default {
   },
   mounted() {
     this.fetchData();
+    this.fetchCurrentStreak();
   },
   methods: {
-    // 1. Tải 100% từ Database qua API Backend
+    // Tải streak hiện tại từ backend
+    async fetchCurrentStreak() {
+      try {
+        const res = await axios.get(`http://localhost:4000/api/streak?userId=${this.resolvedUserId}`);
+        if (res.data?.success && res.data.data) {
+          this.currentStreakCount = res.data.data.currentStreak || 0;
+        }
+      } catch (error) {
+        console.error('Lỗi khi lấy thông tin streak:', error);
+      }
+    },
+
+    // 1. Tải dữ liệu từ Database qua API Backend
     async fetchData() {
       try {
         this.loading = true;
         const deckId = this.resolvedDeckId;
 
-        // Gọi đồng thời cả Words và Sentences từ Database
         const [wordsRes, sentencesRes] = await Promise.all([
           axios.get(`http://localhost:4000/api/vocab/decks/${deckId}/words`),
           axios.get(`http://localhost:4000/api/vocab/decks/${deckId}/sentences`)
@@ -364,17 +381,13 @@ export default {
       const queue = [];
 
       if (this.resolvedLessonId === 'new-1') {
-        // Bài 1: Khám phá từ mới
         targetPool.forEach((w) => queue.push(this.buildQuestionCard('vocab', w)));
       } else if (this.resolvedLessonId === 'new-2') {
-        // Bài 2: Luyện nghe phản xạ
         targetPool.forEach((w) => queue.push(this.buildQuestionCard('listening', w)));
       } else if (this.resolvedLessonId === 'review-1') {
-        // Bài 3: Ghép câu
         const sentenceQs = this.generateSentenceQuestions();
         queue.push(...sentenceQs);
       } else {
-        // Bài 4: Tổng hợp
         targetPool.slice(0, 4).forEach((w) => queue.push(this.buildQuestionCard('vocab', w)));
         queue.push(...this.generateSentenceQuestions().slice(0, 2));
       }
@@ -385,6 +398,8 @@ export default {
       this.showResult = false;
       this.isFinished = false;
       this.score = 0;
+      this.correctCount = 0;
+      this.wrongCount = 0;
     },
 
     getLessonWords() {
@@ -455,8 +470,10 @@ export default {
         if (index === exercise.correct) {
           exercise.isCorrect = true;
           this.score += 10;
+          this.correctCount += 1;
         } else {
           exercise.isCorrect = false;
+          this.wrongCount += 1;
         }
       }
     },
@@ -498,15 +515,31 @@ export default {
       await this.saveLessonProgress();
     },
 
+    // Lưu cả tiến độ bài học và cập nhật Streak/Daily stats
     async saveLessonProgress() {
       try {
-        await axios.post('http://localhost:4000/api/vocab-progress/complete-lesson', {
-          userId: this.resolvedUserId,
-          deckId: this.resolvedDeckId,
-          lessonId: this.resolvedLessonId
-        });
+        const wordsLearnedCount = this.lessonWords.length;
+
+        // Gửi song song cả 2 request lưu tiến độ và ghi nhận streak
+        const [progressRes, streakRes] = await Promise.all([
+          axios.post('http://localhost:4000/api/vocab-progress/complete-lesson', {
+            userId: this.resolvedUserId,
+            deckId: this.resolvedDeckId,
+            lessonId: this.resolvedLessonId
+          }),
+          axios.post('http://localhost:4000/api/streak/record', {
+            userId: this.resolvedUserId,
+            wordsLearned: wordsLearnedCount,
+            correctAnswers: this.correctCount,
+            wrongAnswers: this.wrongCount
+          })
+        ]);
+
+        if (streakRes.data?.data?.currentStreak !== undefined) {
+          this.currentStreakCount = streakRes.data.data.currentStreak;
+        }
       } catch (error) {
-        console.error('Lỗi khi lưu tiến độ bài học:', error);
+        console.error('Lỗi khi lưu tiến độ bài học & streak:', error);
       }
     },
 
@@ -579,6 +612,9 @@ export default {
       exercise.showResult = true;
       if (exercise.isCorrect) {
         this.score += 15;
+        this.correctCount += 1;
+      } else {
+        this.wrongCount += 1;
       }
     }
   }

@@ -12,9 +12,11 @@
 
         <div class="flex items-center gap-3">
           <div class="flex items-center gap-2 rounded-2xl border-2 border-amber-200 bg-amber-50/80 px-4 py-2 text-sm font-black text-amber-700 shadow-xs">
+            <span>⭐</span>
             <span>{{ totalXp }} <span class="text-xs uppercase">XP</span></span>
           </div>
           <div class="flex items-center gap-2 rounded-2xl border-2 border-orange-200 bg-orange-50/80 px-4 py-2 text-sm font-black text-orange-700 shadow-xs">
+            <span>🔥</span>
             <span>{{ streak }} <span class="text-xs uppercase">ngày streak</span></span>
           </div>
         </div>
@@ -161,7 +163,7 @@
                     >
                       Đã hoàn thành
                     </span>
-                    <span
+                    <span 
                       v-else-if="!isLessonUnlocked(selectedChapter, lesson)"
                       class="rounded-md bg-slate-200 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-slate-500"
                     >
@@ -251,9 +253,16 @@ export default {
   },
   activated() {
     this.fetchUserProgress();
+    this.fetchStreakAndUserStats();
   },
   methods: {
-    // 1. Kiểm tra trạng thái hoàn thành bài học
+    // 1. Lấy headers có Bearer Token để gửi kèm request
+    getAuthHeaders() {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      return token ? { Authorization: `Bearer ${token}` } : {};
+    },
+
+    // 2. Kiểm tra trạng thái hoàn thành bài học
     isLessonCompleted(chapterId, lessonId) {
       return this.completedLessonKeys.includes(`${chapterId}-${lessonId}`);
     },
@@ -280,11 +289,38 @@ export default {
       );
     },
 
-    // 2. Lấy dữ liệu tiến độ từ backend
+    // 3. Lấy chuỗi streak và XP thực tế lưu trong CSDL
+    async fetchStreakAndUserStats() {
+      try {
+        // Gọi API Streak
+        const streakRes = await axios.get('http://localhost:4000/api/streak', {
+          params: { userId: this.userId },
+          headers: this.getAuthHeaders()
+        });
+        if (streakRes.data?.success && streakRes.data.data) {
+          this.streak = streakRes.data.data.currentStreak || 0;
+        }
+
+        // Gọi API lấy thông tin người dùng (/api/auth/me) để lấy XP
+        const userRes = await axios.get('http://localhost:4000/api/auth/me', {
+          params: { userId: this.userId },
+          headers: this.getAuthHeaders()
+        });
+
+        if (userRes.data?.success && userRes.data.data) {
+          this.totalXp = userRes.data.data.xp || userRes.data.data.points || 0;
+        }
+      } catch (error) {
+        console.warn('Lỗi khi tải dữ liệu streak/XP:', error);
+      }
+    },
+
+    // 4. Lấy dữ liệu tiến độ bài học từ backend
     async fetchUserProgress() {
       try {
         const res = await axios.get('http://localhost:4000/api/vocab-progress/user-progress', {
-          params: { userId: this.userId }
+          params: { userId: this.userId },
+          headers: this.getAuthHeaders()
         });
         if (res.data?.success && Array.isArray(res.data.data)) {
           this.completedLessonKeys = res.data.data;
@@ -294,7 +330,7 @@ export default {
       }
     },
 
-    // 3. Tải danh sách bộ chủ đề (decks) và số từ của từng chủ đề
+    // 5. Tải danh sách bộ chủ đề (decks), số từ, tiến độ, streak và XP
     async fetchLearningData() {
       try {
         this.loading = true;
@@ -302,12 +338,12 @@ export default {
 
         const [decksRes] = await Promise.all([
           axios.get('http://localhost:4000/api/vocab/decks'),
-          this.fetchUserProgress()
+          this.fetchUserProgress(),
+          this.fetchStreakAndUserStats()
         ]);
 
         const rawDecks = decksRes.data?.data || decksRes.data || [];
         
-        // Nạp và lấy chính xác số từ của từng chương từ API
         const chaptersWithCount = await Promise.all(
           rawDecks.map(async (deck, index) => {
             let count = 0;
@@ -336,7 +372,7 @@ export default {
       }
     },
 
-    // 4. Chọn chương
+    // 6. Chọn chương
     async selectChapter(chapterId) {
       const chapterIndex = this.chapters.findIndex((chapter) => chapter.id === chapterId);
       const chapter = this.chapters[chapterIndex];
@@ -357,7 +393,7 @@ export default {
       }
     },
 
-    // 5. Phát sự kiện bắt đầu học
+    // 7. Phát sự kiện bắt đầu học
     handleStartLesson(chapterId, lessonId) {
       const chapter = this.chapters.find((item) => item.id === chapterId);
       const lesson = chapter?.lessons.find((item) => item.id === lessonId);
@@ -368,11 +404,12 @@ export default {
         lessonId, 
         deckId: chapterId,
         deckTitle: this.selectedChapter ? this.selectedChapter.name : 'Bài học',
+        streak: this.streak,
         isReview: this.isLessonCompleted(chapterId, lessonId)
       });
     },
 
-    // 6. Hàm hỗ trợ component cha gọi trực tiếp để cập nhật ngay state
+    // 8. Cập nhật ngay state và gọi lại streak/XP sau khi hoàn tất bài học
     async markLessonComplete(chapterId, lessonId) {
       const lessonKey = `${chapterId}-${lessonId}`;
       try {
@@ -380,11 +417,14 @@ export default {
           deckId: chapterId,
           lessonId: lessonId,
           userId: this.userId
+        }, {
+          headers: this.getAuthHeaders()
         });
 
         if (!this.completedLessonKeys.includes(lessonKey)) {
           this.completedLessonKeys.push(lessonKey);
         }
+        await this.fetchStreakAndUserStats();
       } catch (error) {
         console.error('Lỗi khi lưu tiến độ bài học:', error);
       }

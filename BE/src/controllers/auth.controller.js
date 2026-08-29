@@ -28,10 +28,10 @@ exports.register = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Thêm user mới (các trường streak_count, daily_goal để mặc định)
+    // Thêm user mới (xp mặc định 0, streak_count 0, daily_goal 10)
     await db.query(
-      'INSERT INTO users (username, email, password, role, streak_count, daily_goal) VALUES (?, ?, ?, ?, ?, ?)',
-      [username, email, hashedPassword, 'user', 0, 10]
+      'INSERT INTO users (username, email, password, role, streak_count, daily_goal, xp) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [username, email, hashedPassword, 'user', 0, 10, 0]
     );
 
     res.status(201).json({ message: 'Đăng ký tài khoản thành công!' });
@@ -77,7 +77,8 @@ exports.login = async (req, res) => {
         role: user.role,
         streak: user.streak_count || 0,
         level: user.level || 1,
-        points: user.points || user.xp || 0,
+        xp: user.xp || user.points || 0,
+        points: user.xp || user.points || 0,
         totalWords: user.total_words || 0,
         totalLessons: user.total_lessons || 0,
         joinDate: user.created_at || user.createdAt
@@ -88,13 +89,14 @@ exports.login = async (req, res) => {
   }
 };
 
-// 3. LẤY THÔNG TIN USER HIỆN TẠI (GET /api/auth/me)
+// 3. LẤY THÔNG TIN USER HIỆN TẠI (GET /api/auth/me HOẶC GET /api/auth/profile)
 exports.getMe = async (req, res) => {
   try {
-    const userId = req.user.id; // Lấy từ auth middleware (req.user)
+    // Lấy userId từ JWT Middleware, nếu chưa có thì lấy từ req.query hoặc mặc định 1
+    const userId = req.user?.id || req.query.userId || 1;
 
     const [users] = await db.query(
-      'SELECT id, username, email, role, streak_count, daily_goal, created_at FROM users WHERE id = ?',
+      'SELECT id, username, email, role, streak_count, daily_goal, xp, created_at FROM users WHERE id = ?',
       [userId]
     );
 
@@ -114,8 +116,9 @@ exports.getMe = async (req, res) => {
         role: user.role,
         streak: user.streak_count || 0,
         dailyGoal: user.daily_goal || 10,
-        level: 1,
-        points: 0,
+        xp: user.xp || 0,
+        points: user.xp || 0,
+        level: Math.floor((user.xp || 0) / 100) + 1,
         totalWords: 0,
         totalLessons: 0,
         progress: 0,
@@ -130,7 +133,7 @@ exports.getMe = async (req, res) => {
 // 4. CẬP NHẬT THÔNG TIN CÁ NHÂN (PUT /api/users/profile hoặc PUT /api/auth/profile)
 exports.updateProfile = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user?.id || req.body.userId || 1;
     const { name, currentPassword, newPassword } = req.body;
 
     if (!name) {
@@ -175,7 +178,7 @@ exports.updateProfile = async (req, res) => {
 // 5. ĐỔI MẬT KHẨU (Khi đã đăng nhập)
 exports.changePassword = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user?.id || req.body.userId || 1;
     const { oldPassword, newPassword } = req.body;
 
     const [users] = await db.query('SELECT password FROM users WHERE id = ?', [userId]);
