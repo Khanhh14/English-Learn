@@ -86,22 +86,50 @@ exports.completeLesson = async (req, res) => {
       });
     }
 
-    const query = `
+    // 1. Kiểm tra xem bài học này đã từng hoàn thành trước đó chưa
+    const isAlreadyCompleted = await hasCompletedLesson(userId, deckId, lessonId);
+
+    // 2. Lưu/Cập nhật tiến độ bài học
+    const queryProgress = `
       INSERT INTO user_lesson_progress (user_id, deck_id, lesson_id, is_completed, completed_at)
       VALUES (?, ?, ?, 1, NOW())
       ON DUPLICATE KEY UPDATE 
         is_completed = 1,
         completed_at = NOW()
     `;
+    await db.query(queryProgress, [userId, deckId, lessonId]);
 
-    await db.query(query, [userId, deckId, lessonId]);
+    let earnedXp = 0;
+
+    // 3. Nếu là lần đầu hoàn thành -> Cộng 10 XP vào users và cập nhật user_daily_stats
+    if (!isAlreadyCompleted) {
+      earnedXp = 10;
+
+      // Cộng 10 XP vào bảng users
+      await db.query(
+        'UPDATE users SET xp = COALESCE(xp, 0) + 10 WHERE id = ?',
+        [userId]
+      );
+
+      // Cập nhật thống kê ngày vào user_daily_stats
+      await db.query(`
+        INSERT INTO user_daily_stats (user_id, study_date, words_learned, correct_answers, wrong_answers)
+        VALUES (?, CURDATE(), 6, 6, 0)
+        ON DUPLICATE KEY UPDATE 
+          words_learned = words_learned + 6,
+          correct_answers = correct_answers + 6
+      `, [userId]);
+    }
 
     return res.status(200).json({
       success: true,
-      message: 'Ghi nhận hoàn thành bài học thành công'
+      message: isAlreadyCompleted 
+        ? 'Ôn tập bài học thành công!' 
+        : 'Chúc mừng! Bạn đã hoàn thành bài học mới và nhận được 10 XP.',
+      earnedXp
     });
   } catch (error) {
-    console.error('Lỗi cập nhật tiến độ học:', error);
+    console.error('Lỗi cập nhật tiến độ học & XP:', error);
     return res.status(500).json({ 
       success: false, 
       message: 'Lỗi máy chủ khi lưu tiến độ học' 
