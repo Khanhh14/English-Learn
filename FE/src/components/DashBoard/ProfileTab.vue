@@ -71,14 +71,6 @@
                 <p class="text-xs text-gray-500">🔥 Chuỗi ngày</p>
               </div>
               <div class="text-center">
-                <p class="text-2xl font-bold text-purple-600">{{ currentUser.level || 1 }}</p>
-                <p class="text-xs text-gray-500">🏆 Cấp độ</p>
-              </div>
-              <div class="text-center">
-                <p class="text-2xl font-bold text-green-600">{{ currentUser.totalWords ?? currentUser.total_words ?? 0 }}</p>
-                <p class="text-xs text-gray-500">📚 Từ vựng</p>
-              </div>
-              <div class="text-center">
                 <p class="text-2xl font-bold text-blue-600">{{ currentUser.totalLessons ?? currentUser.total_lessons ?? 0 }}</p>
                 <p class="text-xs text-gray-500">📖 Bài học</p>
               </div>
@@ -99,7 +91,7 @@
               <span class="font-medium text-gray-700">{{ (currentUser.points || currentUser.xp || 0).toLocaleString() }} XP</span>
             </div>
             <div class="flex justify-between py-2 border-b border-gray-100">
-              <span class="text-gray-500">Tiến độ</span>
+              <span class="text-gray-500">Tiến độ khóa học</span>
               <span class="font-medium text-gray-700">{{ currentUser.progress || 0 }}%</span>
             </div>
             <div class="flex justify-between py-2">
@@ -159,16 +151,7 @@
       <div v-if="!isEditing" class="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-gray-200">
         <h4 class="font-bold text-gray-800 mb-4">📊 Thống kê học tập</h4>
         
-        <div class="space-y-4">
-          <div>
-            <div class="flex justify-between text-sm mb-1">
-              <span class="text-gray-600">Từ vựng đã học</span>
-              <span class="font-medium text-gray-700">{{ currentUser.totalWords || currentUser.total_words || 0 }}/500</span>
-            </div>
-            <div class="w-full bg-gray-200 rounded-full h-2">
-              <div class="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full" :style="{ width: Math.min(((currentUser.totalWords || currentUser.total_words || 0) / 500 * 100), 100) + '%' }"></div>
-            </div>
-          </div>
+        <div class="space-y-5">
           <div>
             <div class="flex justify-between text-sm mb-1">
               <span class="text-gray-600">Bài học đã hoàn thành</span>
@@ -189,28 +172,11 @@
           </div>
           <div>
             <div class="flex justify-between text-sm mb-1">
-              <span class="text-gray-600">Tiến độ lên cấp</span>
+              <span class="text-gray-600">Tiến độ hoàn thành</span>
               <span class="font-medium text-gray-700">{{ currentUser.progress || 0 }}%</span>
             </div>
             <div class="w-full bg-gray-200 rounded-full h-2">
               <div class="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full" :style="{ width: (currentUser.progress || 0) + '%' }"></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="mt-6 pt-6 border-t border-gray-200">
-          <div class="grid grid-cols-3 gap-3">
-            <div class="text-center p-3 bg-indigo-50 rounded-xl">
-              <p class="text-xs text-gray-500">Học</p>
-              <p class="text-lg font-bold text-indigo-600">{{ currentUser.learningHours || '0h' }}</p>
-            </div>
-            <div class="text-center p-3 bg-purple-50 rounded-xl">
-              <p class="text-xs text-gray-500">Luyện tập</p>
-              <p class="text-lg font-bold text-purple-600">{{ currentUser.practiceHours || '0h' }}</p>
-            </div>
-            <div class="text-center p-3 bg-pink-50 rounded-xl">
-              <p class="text-xs text-gray-500">Tổng</p>
-              <p class="text-lg font-bold text-pink-600">{{ currentUser.totalHours || '0h' }}</p>
             </div>
           </div>
         </div>
@@ -274,41 +240,33 @@ export default {
   },
   methods: {
     initUserData() {
-      // 1. Đọc ngay từ localStorage
       const stored = localStorage.getItem('user');
       if (stored) {
         try {
           this.currentUser = JSON.parse(stored);
           this.editedUser.name = this.currentUser.name || this.currentUser.username || '';
-          console.log('[ProfileTab] Đã nạp từ localStorage:', this.currentUser);
         } catch (e) {
           console.error('[ProfileTab] Lỗi parse localStorage user:', e);
         }
       }
 
-      // 2. Nếu có props từ cha truyền sang
       if (this.user && Object.keys(this.user).length > 0 && this.user.name && this.user.name !== 'Nguyễn Văn A') {
         this.currentUser = { ...this.currentUser, ...this.user };
         this.editedUser.name = this.currentUser.name || this.currentUser.username || '';
       }
 
-      // 3. Gọi API lấy thông tin mới nhất
       this.fetchFreshUserProfile();
     },
 
     async fetchFreshUserProfile() {
       const token = localStorage.getItem('token') || localStorage.getItem('access_token');
-      if (!token) {
-        console.warn('[ProfileTab] Chưa có Token trong localStorage!');
-        return;
-      }
+      if (!token) return;
 
       try {
-        const res = await axios.get('http://localhost:4000/api/auth/me', {
+        const res = await axios.get('/api/auth/me', {
           headers: { Authorization: `Bearer ${token}` }
         });
         
-        console.log('[ProfileTab] API /api/auth/me trả về:', res.data);
         const fetchedData = res.data?.data || res.data?.user || res.data;
         if (fetchedData) {
           this.currentUser = { ...this.currentUser, ...fetchedData };
@@ -391,7 +349,7 @@ export default {
         const token = localStorage.getItem('token') || localStorage.getItem('access_token');
         
         if (token) {
-          await axios.put('http://localhost:4000/api/auth/profile', payload, {
+          await axios.put('/api/auth/profile', payload, {
             headers: { Authorization: `Bearer ${token}` }
           });
         }

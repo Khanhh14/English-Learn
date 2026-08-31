@@ -30,7 +30,6 @@
             </div>
 
             <div class="mt-8 space-y-4">
-              <!-- Lộ trình cá nhân hóa -->
               <div class="hero-item">
                 <div class="hero-item-icon bg-indigo-500 text-white flex items-center justify-center">
                   <font-awesome-icon :icon="['fas', 'route']" />
@@ -41,7 +40,6 @@
                 </div>
               </div>
 
-              <!-- Ghi nhớ theo phương pháp AI -->
               <div class="hero-item">
                 <div class="hero-item-icon bg-gradient-to-br from-purple-500 to-pink-500 text-white flex items-center justify-center">
                   <font-awesome-icon :icon="['fas', 'brain']" />
@@ -210,7 +208,9 @@ export default {
       this.isLoading = true
 
       try {
-        const response = await fetch('http://localhost:4000/api/auth/login', {
+        const baseUrl = 'https://english-learn-1.onrender.com'
+
+        const response = await fetch(`${baseUrl}/api/auth/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -221,7 +221,13 @@ export default {
           })
         })
 
-        const data = await response.json()
+        const text = await response.text()
+        let data = {}
+        try {
+          data = text ? JSON.parse(text) : {}
+        } catch (parseErr) {
+          throw new Error('Máy chủ Backend đang khởi động hoặc phản hồi không đúng chuẩn. Vui lòng thử lại sau 30 giây!')
+        }
 
         if (!response.ok) {
           throw new Error(data.message || 'Email hoặc mật khẩu không chính xác!')
@@ -246,14 +252,12 @@ export default {
         localStorage.setItem('token', data.token)
         localStorage.setItem('user', JSON.stringify(userObj))
 
-        // Toast XANH LÁ (Mặc định)
         this.$toast.success('Đăng nhập thành công!')
 
         const redirectPath = this.$route.query.redirect || '/dashboard'
         this.$router.push(redirectPath)
       } catch (err) {
         this.errorMessage = err.message || 'Không thể kết nối đến máy chủ!'
-        // Toast ĐỎ (Mặc định)
         this.$toast.error(this.errorMessage)
       } finally {
         this.isLoading = false

@@ -140,7 +140,7 @@ export default {
       try {
         this.loading = true;
         // Gọi API qua endpoint /api/ranking đã đăng ký ở main.js
-        const res = await axios.get('http://localhost:4000/api/ranking', {
+        const res = await axios.get('/api/ranking', {
           params: { type: this.activeTab },
           headers: this.getAuthHeaders()
         });

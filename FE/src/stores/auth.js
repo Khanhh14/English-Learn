@@ -19,7 +19,7 @@ export const useAuthStore = defineStore('auth', {
     async login(credentials) {
       this.loading = true;
       try {
-        const res = await axios.post('http://localhost:4000/api/auth/login', credentials);
+        const res = await axios.post('/api/auth/login', credentials);
         const { token, user } = res.data;
 
         this.token = token;
@@ -42,7 +42,7 @@ export const useAuthStore = defineStore('auth', {
     async fetchMe() {
       if (!this.token) return;
       try {
-        const res = await axios.get('http://localhost:4000/api/auth/me', {
+        const res = await axios.get('/api/auth/me', {
           headers: { Authorization: `Bearer ${this.token}` }
         });
         const userData = res.data?.data || res.data;
@@ -61,7 +61,7 @@ export const useAuthStore = defineStore('auth', {
     // 3. Cập nhật hồ sơ
     async updateProfile(payload) {
       try {
-        const res = await axios.put('http://localhost:4000/api/auth/profile', payload, {
+        const res = await axios.put('/api/auth/profile', payload, {
           headers: { Authorization: `Bearer ${this.token}` }
         });
 

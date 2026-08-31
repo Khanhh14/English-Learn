@@ -293,7 +293,7 @@ export default {
     async fetchStreakAndUserStats() {
       try {
         // Gọi API Streak
-        const streakRes = await axios.get('http://localhost:4000/api/streak', {
+        const streakRes = await axios.get('/api/streak', {
           params: { userId: this.userId },
           headers: this.getAuthHeaders()
         });
@@ -302,7 +302,7 @@ export default {
         }
 
         // Gọi API lấy thông tin người dùng (/api/auth/me) để lấy XP
-        const userRes = await axios.get('http://localhost:4000/api/auth/me', {
+        const userRes = await axios.get('/api/auth/me', {
           params: { userId: this.userId },
           headers: this.getAuthHeaders()
         });
@@ -318,7 +318,7 @@ export default {
     // 4. Lấy dữ liệu tiến độ bài học từ backend
     async fetchUserProgress() {
       try {
-        const res = await axios.get('http://localhost:4000/api/vocab-progress/user-progress', {
+        const res = await axios.get('/api/vocab-progress/user-progress', {
           params: { userId: this.userId },
           headers: this.getAuthHeaders()
         });
@@ -337,7 +337,7 @@ export default {
         this.errorMessage = '';
 
         const [decksRes] = await Promise.all([
-          axios.get('http://localhost:4000/api/vocab/decks'),
+          axios.get('/api/vocab/decks'),
           this.fetchUserProgress(),
           this.fetchStreakAndUserStats()
         ]);
@@ -348,7 +348,7 @@ export default {
           rawDecks.map(async (deck, index) => {
             let count = 0;
             try {
-              const countRes = await axios.get(`http://localhost:4000/api/vocab/decks/${deck.id}/words`);
+              const countRes = await axios.get(`/api/vocab/decks/${deck.id}/words`);
               const list = countRes.data?.data || countRes.data || [];
               count = list.length;
             } catch {
@@ -384,7 +384,7 @@ export default {
       if (!this.selectedChapter) return;
 
       try {
-        const wordsRes = await axios.get(`http://localhost:4000/api/vocab/decks/${chapterId}/words`);
+        const wordsRes = await axios.get(`/api/vocab/decks/${chapterId}/words`);
         const words = wordsRes.data?.data || wordsRes.data || [];
         this.totalAvailableWords = words.length;
         this.selectedChapter.totalWords = words.length;
@@ -413,7 +413,7 @@ export default {
     async markLessonComplete(chapterId, lessonId) {
       const lessonKey = `${chapterId}-${lessonId}`;
       try {
-        await axios.post('http://localhost:4000/api/vocab-progress/complete-lesson', {
+        await axios.post('/api/vocab-progress/complete-lesson', {
           deckId: chapterId,
           lessonId: lessonId,
           userId: this.userId

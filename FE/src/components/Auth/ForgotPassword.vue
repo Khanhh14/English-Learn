@@ -157,8 +157,8 @@
 <script>
 import Header from '@/components/Home/Header.vue'
 
-// Lấy biến URL từ Vite hoặc gán mặc định http://localhost:4000
-const API_BASE_URL = import.meta.env?.VITE_API_URL || 'http://localhost:4000'
+// Lấy biến URL từ Vite hoặc gán mặc định 
+const API_BASE_URL = import.meta.env?.VITE_API_URL || ''
 
 export default {
   name: 'ForgotPassword',

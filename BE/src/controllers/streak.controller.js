@@ -2,7 +2,6 @@ const db = require('../config/db');
 
 // --- HÀM TÍNH CHUỖI NGÀY HỌC LIÊN TIẾP (STREAK) ---
 async function calculateUserStreak(userId) {
-  // Định dạng ngày thành chuỗi 'YYYY-MM-DD' để tránh lỗi lệch múi giờ
   const [rows] = await db.query(
     `SELECT DISTINCT DATE_FORMAT(study_date, '%Y-%m-%d') AS study_date
      FROM user_daily_stats
@@ -13,7 +12,6 @@ async function calculateUserStreak(userId) {
 
   if (!rows.length) return 0;
 
-  // Lấy ngày hiện tại chuẩn từ DB
   const [[{ today }]] = await db.query(`SELECT DATE_FORMAT(CURDATE(), '%Y-%m-%d') AS today`);
 
   const dates = rows.map((r) => r.study_date);
@@ -22,7 +20,6 @@ async function calculateUserStreak(userId) {
   const diffMs = new Date(today) - new Date(mostRecentDateStr);
   const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
 
-  // Nếu ngày học gần nhất cách hôm nay từ 2 ngày trở lên -> đứt chuỗi
   if (diffDays > 1) {
     return 0;
   }
@@ -49,7 +46,6 @@ exports.getUserStreak = async (req, res) => {
     const userId = req.user?.id || req.query.userId || 1;
     const currentStreak = await calculateUserStreak(userId);
 
-    // Kiểm tra xem hôm nay người dùng đã có hoạt động học chưa
     const [todayActivity] = await db.query(
       `SELECT 1 
        FROM user_daily_stats 
@@ -74,13 +70,13 @@ exports.getUserStreak = async (req, res) => {
   }
 };
 
-// [POST] /api/streak/record
+// [POST] /api/streak/record (Ghi nhận hoạt động, Streak và cộng XP)
 exports.recordDailyActivity = async (req, res) => {
   try {
     const userId = req.user?.id || req.body.userId || 1;
-    const { wordsLearned = 0, correctAnswers = 0, wrongAnswers = 0 } = req.body;
+    const { wordsLearned = 0, correctAnswers = 0, wrongAnswers = 0, earnedXp = 0 } = req.body;
 
-    // Ghi nhận hoặc cộng dồn chỉ số học tập trong ngày hôm nay
+    // 1. Cập nhật bảng user_daily_stats
     const query = `
       INSERT INTO user_daily_stats (user_id, study_date, words_learned, correct_answers, wrong_answers)
       VALUES (?, CURDATE(), ?, ?, ?)
@@ -89,14 +85,20 @@ exports.recordDailyActivity = async (req, res) => {
         correct_answers = correct_answers + VALUES(correct_answers),
         wrong_answers = wrong_answers + VALUES(wrong_answers)
     `;
-
     await db.query(query, [userId, wordsLearned, correctAnswers, wrongAnswers]);
 
+    // 2. Cộng XP tích lũy trực tiếp vào bảng users
+    if (earnedXp > 0) {
+      await db.query('UPDATE users SET xp = xp + ? WHERE id = ?', [earnedXp, userId]);
+    }
+
+    // 3. Tính toán lại streak thực tế
     const streak = await calculateUserStreak(userId);
+    await db.query('UPDATE users SET streak_count = ? WHERE id = ?', [streak, userId]);
 
     return res.status(200).json({
       success: true,
-      message: 'Cập nhật tiến độ ngày thành công',
+      message: 'Cập nhật tiến độ ngày & XP thành công',
       data: {
         currentStreak: streak
       }
@@ -109,3 +111,5 @@ exports.recordDailyActivity = async (req, res) => {
     });
   }
 };
+
+exports.calculateUserStreak = calculateUserStreak;

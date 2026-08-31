@@ -172,7 +172,7 @@ export default {
       if (!token) return;
 
       try {
-        const res = await axios.get('http://localhost:4000/api/auth/me', {
+        const res = await axios.get('/api/auth/me', {
           headers: { Authorization: `Bearer ${token}` }
         });
         const serverData = res.data?.data || res.data?.user || res.data;

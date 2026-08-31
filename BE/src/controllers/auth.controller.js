@@ -2,9 +2,21 @@ const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { sendResetCodeEmail } = require('../services/emailService');
+const { calculateUserStreak } = require('./streak.controller');
 
-// Bộ nhớ tạm lưu mã OTP (Key: email, Value: { code, expiresAt })
 const otpStore = new Map();
+
+async function getUserStats(userId) {
+  const [lessonRows] = await db.query(
+    'SELECT COUNT(*) AS total_completed FROM user_lesson_progress WHERE user_id = ? AND is_completed = 1',
+    [userId]
+  );
+  const totalLessons = Number(lessonRows[0]?.total_completed) || 0;
+  const streak = await calculateUserStreak(userId);
+  const progress = Math.min(Math.round((totalLessons / 100) * 100), 100);
+
+  return { totalLessons, streak, progress };
+}
 
 // 1. ĐĂNG KÝ
 exports.register = async (req, res) => {
@@ -15,7 +27,6 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin!' });
     }
 
-    // Kiểm tra trùng username hoặc email
     const [existingUsers] = await db.query(
       'SELECT id FROM users WHERE email = ? OR username = ?',
       [email, username]
@@ -24,11 +35,9 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: 'Email hoặc Username đã tồn tại!' });
     }
 
-    // Mã hóa mật khẩu
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Thêm user mới (xp mặc định 0, streak_count 0, daily_goal 10)
     await db.query(
       'INSERT INTO users (username, email, password, role, streak_count, daily_goal, xp) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [username, email, hashedPassword, 'user', 0, 10, 0]
@@ -45,26 +54,24 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Tìm user theo email
     const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
     if (users.length === 0) {
       return res.status(400).json({ message: 'Email hoặc mật khẩu không chính xác!' });
     }
 
     const user = users[0];
-
-    // So sánh mật khẩu
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: 'Email hoặc mật khẩu không chính xác!' });
     }
 
-    // Tạo JWT Token
     const token = jwt.sign(
       { id: user.id, role: user.role, email: user.email },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET || 'secretkey',
       { expiresIn: '1d' }
     );
+
+    const stats = await getUserStats(user.id);
 
     res.status(200).json({
       message: 'Đăng nhập thành công!',
@@ -75,13 +82,10 @@ exports.login = async (req, res) => {
         username: user.username,
         email: user.email,
         role: user.role,
-        streak: user.streak_count || 0,
-        level: user.level || 1,
-        xp: user.xp || user.points || 0,
-        points: user.xp || user.points || 0,
-        totalWords: user.total_words || 0,
-        totalLessons: user.total_lessons || 0,
-        joinDate: user.created_at || user.createdAt
+        xp: user.xp || 0,
+        points: user.xp || 0,
+        joinDate: user.created_at,
+        ...stats
       }
     });
   } catch (error) {
@@ -89,10 +93,9 @@ exports.login = async (req, res) => {
   }
 };
 
-// 3. LẤY THÔNG TIN USER HIỆN TẠI (GET /api/auth/me HOẶC GET /api/auth/profile)
+// 3. LẤY THÔNG TIN USER HIỆN TẠI
 exports.getMe = async (req, res) => {
   try {
-    // Lấy userId từ JWT Middleware, nếu chưa có thì lấy từ req.query hoặc mặc định 1
     const userId = req.user?.id || req.query.userId || 1;
 
     const [users] = await db.query(
@@ -105,6 +108,7 @@ exports.getMe = async (req, res) => {
     }
 
     const user = users[0];
+    const stats = await getUserStats(user.id);
 
     res.status(200).json({
       success: true,
@@ -114,15 +118,11 @@ exports.getMe = async (req, res) => {
         username: user.username,
         email: user.email,
         role: user.role,
-        streak: user.streak_count || 0,
         dailyGoal: user.daily_goal || 10,
         xp: user.xp || 0,
         points: user.xp || 0,
-        level: Math.floor((user.xp || 0) / 100) + 1,
-        totalWords: 0,
-        totalLessons: 0,
-        progress: 0,
-        joinDate: user.created_at
+        joinDate: user.created_at,
+        ...stats
       }
     });
   } catch (error) {
@@ -130,7 +130,7 @@ exports.getMe = async (req, res) => {
   }
 };
 
-// 4. CẬP NHẬT THÔNG TIN CÁ NHÂN (PUT /api/users/profile hoặc PUT /api/auth/profile)
+// 4. CẬP NHẬT THÔNG TIN CÁ NHÂN
 exports.updateProfile = async (req, res) => {
   try {
     const userId = req.user?.id || req.body.userId || 1;
@@ -140,7 +140,6 @@ exports.updateProfile = async (req, res) => {
       return res.status(400).json({ message: 'Tên hiển thị không được để trống!' });
     }
 
-    // Nếu có yêu cầu đổi mật khẩu kèm theo
     if (newPassword) {
       if (!currentPassword) {
         return res.status(400).json({ message: 'Vui lòng cung cấp mật khẩu hiện tại!' });
@@ -161,7 +160,6 @@ exports.updateProfile = async (req, res) => {
 
       await db.query('UPDATE users SET username = ?, password = ? WHERE id = ?', [name, hashedPassword, userId]);
     } else {
-      // Chỉ cập nhật username/tên
       await db.query('UPDATE users SET username = ? WHERE id = ?', [name, userId]);
     }
 
@@ -175,7 +173,7 @@ exports.updateProfile = async (req, res) => {
   }
 };
 
-// 5. ĐỔI MẬT KHẨU (Khi đã đăng nhập)
+// 5. ĐỔI MẬT KHẨU
 exports.changePassword = async (req, res) => {
   try {
     const userId = req.user?.id || req.body.userId || 1;
@@ -202,28 +200,21 @@ exports.changePassword = async (req, res) => {
   }
 };
 
-// 6. QUÊN MẬT KHẨU (Tạo mã OTP 6 số và gửi qua Email)
+// 6. QUÊN MẬT KHẨU
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-
-    if (!email) {
-      return res.status(400).json({ message: 'Vui lòng cung cấp email!' });
-    }
+    if (!email) return res.status(400).json({ message: 'Vui lòng cung cấp email!' });
 
     const [users] = await db.query('SELECT id FROM users WHERE email = ?', [email]);
     if (users.length === 0) {
       return res.status(404).json({ message: 'Email không tồn tại trong hệ thống!' });
     }
 
-    // Tạo mã ngẫu nhiên 6 chữ số
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = Date.now() + 2 * 60 * 1000; // Hạn 2 phút (120s)
+    const expiresAt = Date.now() + 2 * 60 * 1000;
 
-    // Lưu mã vào RAM
     otpStore.set(email, { code, expiresAt });
-
-    // Gửi email
     await sendResetCodeEmail(email, code);
 
     res.status(200).json({ message: 'Mã xác thực đã được gửi về email của bạn!' });
@@ -232,7 +223,7 @@ exports.forgotPassword = async (req, res) => {
   }
 };
 
-// 7. ĐẶT LẠI MẬT KHẨU MỚI (Xác thực bằng OTP từ RAM và Email)
+// 7. ĐẶT LẠI MẬT KHẨU
 exports.resetPassword = async (req, res) => {
   try {
     const { email, code, newPassword } = req.body;
@@ -242,26 +233,19 @@ exports.resetPassword = async (req, res) => {
     }
 
     const record = otpStore.get(email);
-
-    // Kiểm tra mã OTP khớp
     if (!record || record.code !== code) {
       return res.status(400).json({ message: 'Mã xác thực không chính xác!' });
     }
 
-    // Kiểm tra mã còn hạn
     if (Date.now() > record.expiresAt) {
       otpStore.delete(email);
-      return res.status(400).json({ message: 'Mã xác thực đã hết hạn, vui lòng yêu cầu mã mới!' });
+      return res.status(400).json({ message: 'Mã xác thực đã hết hạn!' });
     }
 
-    // Mã hóa mật khẩu mới
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-    // Cập nhật CSDL
     await db.query('UPDATE users SET password = ? WHERE email = ?', [hashedPassword, email]);
-
-    // Xóa mã OTP khỏi bộ nhớ
     otpStore.delete(email);
 
     res.status(200).json({ message: 'Đặt lại mật khẩu thành công!' });

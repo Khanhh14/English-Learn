@@ -21,10 +21,6 @@
 
         <!-- Badges -->
         <div class="flex items-center gap-2">
-          <div class="flex items-center gap-1.5 rounded-2xl border-2 border-amber-200/80 bg-amber-50/80 px-3.5 py-1.5 text-xs font-black text-amber-700 shadow-xs sm:text-sm">
-            <span>⭐</span>
-            <span>{{ score }} <span class="text-[10px] font-bold uppercase sm:text-xs">XP</span></span>
-          </div>
           <div class="flex items-center gap-1.5 rounded-2xl border-2 border-orange-200/80 bg-orange-50/80 px-3.5 py-1.5 text-xs font-black text-orange-700 shadow-xs sm:text-sm">
             <span>🔥</span>
             <span>{{ currentStreakCount }} <span class="text-[10px] font-bold uppercase sm:text-xs">ngày</span></span>
@@ -79,7 +75,7 @@
           </div>
           <h2 class="text-3xl font-black text-slate-800">Hoàn thành bài học!</h2>
           <p class="mt-2 text-base font-medium text-slate-500">
-            Bạn đã hoàn thành bài học và giữ vững chuỗi 🔥 <strong class="text-orange-600">{{ currentStreakCount }} ngày</strong>!
+            Bạn đã nhận <strong class="text-indigo-600">+10 XP</strong> và tăng chuỗi lên 🔥 <strong class="text-orange-600">{{ currentStreakCount }} ngày liên tiếp</strong>!
           </p>
 
           <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
@@ -276,7 +272,7 @@ export default {
       currentWords: [],
       lessonWords: [],
       currentSentences: [],
-      score: 0,
+      score: 10,
       loading: true,
       lessonQueue: [],
       currentStep: 0,
@@ -288,7 +284,8 @@ export default {
       // Thống kê bài học để ghi nhận vào user_daily_stats
       correctCount: 0,
       wrongCount: 0,
-      currentStreakCount: this.streak
+      currentStreakCount: this.streak,
+      hasIncreasedStreak: false
     };
   },
   computed: {
@@ -331,27 +328,25 @@ export default {
     this.fetchCurrentStreak();
   },
   methods: {
-    // Tải streak hiện tại từ backend
     async fetchCurrentStreak() {
       try {
-        const res = await axios.get(`http://localhost:4000/api/streak?userId=${this.resolvedUserId}`);
+        const res = await axios.get(`/api/streak?userId=${this.resolvedUserId}`);
         if (res.data?.success && res.data.data) {
-          this.currentStreakCount = res.data.data.currentStreak || 0;
+          this.currentStreakCount = res.data.data.currentStreak ?? 0;
         }
       } catch (error) {
         console.error('Lỗi khi lấy thông tin streak:', error);
       }
     },
 
-    // 1. Tải dữ liệu từ Database qua API Backend
     async fetchData() {
       try {
         this.loading = true;
         const deckId = this.resolvedDeckId;
 
         const [wordsRes, sentencesRes] = await Promise.all([
-          axios.get(`http://localhost:4000/api/vocab/decks/${deckId}/words`),
-          axios.get(`http://localhost:4000/api/vocab/decks/${deckId}/sentences`)
+          axios.get(`/api/vocab/decks/${deckId}/words`),
+          axios.get(`/api/vocab/decks/${deckId}/sentences`)
         ]);
 
         const apiWords = wordsRes.data?.data || [];
@@ -372,7 +367,6 @@ export default {
       }
     },
 
-    // 2. Tạo luồng câu hỏi theo từng bài học
     generateLessonFlow() {
       if (!this.currentWords.length) return;
 
@@ -384,9 +378,8 @@ export default {
         targetPool.forEach((w) => queue.push(this.buildQuestionCard('vocab', w)));
       } else if (this.resolvedLessonId === 'new-2') {
         targetPool.forEach((w) => queue.push(this.buildQuestionCard('listening', w)));
-      } else if (this.resolvedLessonId === 'review-1') {
-        const sentenceQs = this.generateSentenceQuestions();
-        queue.push(...sentenceQs);
+      } else if (this.resolvedLessonId === 'review-1' || this.resolvedLessonId === 'summary') {
+        queue.push(...this.generateCombinedReviewQueue());
       } else {
         targetPool.slice(0, 4).forEach((w) => queue.push(this.buildQuestionCard('vocab', w)));
         queue.push(...this.generateSentenceQuestions().slice(0, 2));
@@ -397,9 +390,18 @@ export default {
       this.selectedAnswer = null;
       this.showResult = false;
       this.isFinished = false;
-      this.score = 0;
+      this.score = 10;
       this.correctCount = 0;
       this.wrongCount = 0;
+    },
+
+    generateCombinedReviewQueue() {
+      const reviewWords = this.getLessonWords();
+      const vocabQuestions = reviewWords.slice(0, 4).map((w) => this.buildQuestionCard('vocab', w));
+      const listeningQuestions = reviewWords.slice(0, 4).map((w) => this.buildQuestionCard('listening', w));
+      const sentenceQuestions = this.generateSentenceQuestions().slice(0, 3);
+
+      return [...vocabQuestions, ...listeningQuestions, ...sentenceQuestions].sort(() => Math.random() - 0.5);
     },
 
     getLessonWords() {
@@ -469,7 +471,6 @@ export default {
         exercise.showResult = true;
         if (index === exercise.correct) {
           exercise.isCorrect = true;
-          this.score += 10;
           this.correctCount += 1;
         } else {
           exercise.isCorrect = false;
@@ -481,7 +482,7 @@ export default {
     async nextExercise() {
       const currentEx = this.currentExercise;
 
-      // NẾU LÀM SAI -> ĐẨY VỀ CUỐI HÀNG ĐỢI
+      // Làm sai -> đẩy về cuối hàng đợi
       if (currentEx && !this.isCurrentAnswerCorrect) {
         if (currentEx.type === 'sentence') {
           const wordList = currentEx.correctAnswer.split(/\s+/).filter(Boolean);
@@ -502,7 +503,7 @@ export default {
         }
       }
 
-      // CHUYỂN CÂU HOẶC HOÀN TẤT
+      // Tiếp tục câu tiếp theo
       if (this.currentStep < this.lessonQueue.length - 1) {
         this.currentStep += 1;
         this.selectedAnswer = null;
@@ -510,33 +511,41 @@ export default {
         return;
       }
 
-      // KHI ĐÃ ĐÚNG HẾT TOÀN BỘ CÂU
+      // Hoàn tất toàn bộ câu trong buổi học
       this.isFinished = true;
+      if (!this.hasIncreasedStreak) {
+        this.currentStreakCount += 1;
+        this.hasIncreasedStreak = true;
+      }
       await this.saveLessonProgress();
     },
 
-    // Lưu cả tiến độ bài học và cập nhật Streak/Daily stats
     async saveLessonProgress() {
       try {
         const wordsLearnedCount = this.lessonWords.length;
 
-        // Gửi song song cả 2 request lưu tiến độ và ghi nhận streak
         const [progressRes, streakRes] = await Promise.all([
-          axios.post('http://localhost:4000/api/vocab-progress/complete-lesson', {
+          axios.post('/api/vocab-progress/complete-lesson', {
             userId: this.resolvedUserId,
             deckId: this.resolvedDeckId,
             lessonId: this.resolvedLessonId
           }),
-          axios.post('http://localhost:4000/api/streak/record', {
+          axios.post('/api/streak/record', {
             userId: this.resolvedUserId,
             wordsLearned: wordsLearnedCount,
             correctAnswers: this.correctCount,
-            wrongAnswers: this.wrongCount
+            wrongAnswers: this.wrongCount,
+            earnedXp: 10,
+            incrementStreak: true
           })
         ]);
 
         if (streakRes.data?.data?.currentStreak !== undefined) {
           this.currentStreakCount = streakRes.data.data.currentStreak;
+        }
+
+        if (progressRes?.data?.success === false) {
+          console.warn('Progress save returned unsuccessful result', progressRes.data);
         }
       } catch (error) {
         console.error('Lỗi khi lưu tiến độ bài học & streak:', error);
@@ -547,7 +556,7 @@ export default {
       this.currentStep = 0;
       this.selectedAnswer = null;
       this.showResult = false;
-      this.score = 0;
+      this.score = 10;
       this.isFinished = false;
       this.generateLessonFlow();
     },
@@ -611,7 +620,6 @@ export default {
       exercise.isCorrect = userAnswer.trim().toLowerCase() === exercise.correctAnswer.trim().toLowerCase();
       exercise.showResult = true;
       if (exercise.isCorrect) {
-        this.score += 15;
         this.correctCount += 1;
       } else {
         this.wrongCount += 1;
