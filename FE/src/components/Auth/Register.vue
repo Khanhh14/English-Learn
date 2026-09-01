@@ -255,7 +255,12 @@ export default {
       this.isLoading = true
 
       try {
-        const response = await fetch('/api/auth/register', {
+        const envUrl = import.meta.env.VITE_API_BASE_URL
+        const baseUrl = (envUrl && envUrl.trim() !== '') 
+          ? envUrl.replace(/\/$/, '') 
+          : 'https://english-learn-1.onrender.com'
+
+        const response = await fetch(`${baseUrl}/api/auth/register`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -267,20 +272,22 @@ export default {
           })
         })
 
-        const data = await response.json()
+        const text = await response.text()
+        let data = {}
+        try {
+          data = text ? JSON.parse(text) : {}
+        } catch (parseErr) {
+          throw new Error('Máy chủ Backend đang khởi động hoặc phản hồi không đúng chuẩn. Vui lòng thử lại sau 30 giây!')
+        }
 
         if (!response.ok) {
           throw new Error(data.message || 'Đăng ký thất bại, vui lòng thử lại!')
         }
 
-        // Toast thông báo thành công
         this.$toast.success(data.message || 'Đăng ký tài khoản thành công!')
-        
-        // Điều hướng sang trang đăng nhập
         this.$router.push('/login')
       } catch (error) {
         this.errorMessage = error.message || 'Không thể kết nối đến máy chủ!'
-        // Toast thông báo lỗi
         this.$toast.error(this.errorMessage)
       } finally {
         this.isLoading = false
