@@ -1,282 +1,159 @@
+<!-- src/views/RoadmapView.vue -->
 <template>
-  <div class="min-h-screen bg-[#f8f9fd] py-10 px-4 md:px-12 font-sans">
-    <div class="max-w-6xl mx-auto space-y-8">
-      
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div class="flex items-center space-x-3">
-            <button @click="$router.push('/')" class="p-2 rounded-xl bg-white shadow-sm hover:bg-gray-50 text-gray-600 transition">
-              ←
-            </button>
-            <h1 class="text-3xl font-extrabold text-slate-800">Bài học A1 - Beginner</h1>
-          </div>
-          <p class="text-gray-500 mt-1 text-sm pl-11">
-            {{ activeChapter.wordsCount }} từ vựng sẵn sàng luyện tập
-          </p>
-        </div>
+  <div class="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 relative pb-20">
+    <!-- Animated Background -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden">
+      <div class="absolute -top-40 -right-40 w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+      <div class="absolute -bottom-40 -left-40 w-96 h-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+      <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+    </div>
 
-        <div class="flex items-center space-x-3 self-end md:self-auto">
-          <div class="flex items-center space-x-2 bg-amber-50 text-amber-600 font-bold px-4 py-2 rounded-2xl border border-amber-200/60 shadow-sm text-sm">
-            <span>⭐</span>
-            <span>20 XP</span>
-          </div>
-          <div class="flex items-center space-x-2 bg-rose-50 text-rose-500 font-bold px-4 py-2 rounded-2xl border border-rose-200/60 shadow-sm text-sm">
-            <span>🔥</span>
-            <span>1 NGÀY STREAK</span>
-          </div>
+    <!-- Header Component -->
+    <Header />
+
+    <main class="relative z-10 container mx-auto px-4 max-w-6xl pt-10">
+      <!-- Section Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-indigo-100/60 pb-6 mb-8">
+        <div>
+          <h2 class="text-3xl font-extrabold text-slate-800">Chi tiết lộ trình A1 - Beginner</h2>
+          <p class="text-sm text-slate-500 mt-1">Hoàn thành 6 chương nền tảng để làm chủ giao tiếp cơ bản</p>
+        </div>
+        <div>
+          <span class="inline-flex items-center text-xs font-semibold px-3 py-1.5 bg-emerald-100/80 text-emerald-700 rounded-full border border-emerald-200">
+            6 Chương • 24 Hoạt Động
+          </span>
         </div>
       </div>
 
-      <div>
-        <div class="flex justify-between items-center mb-4">
-          <span class="text-xs font-bold uppercase tracking-wider text-gray-400">Lộ trình học tập</span>
-          <span class="text-xs text-gray-400 font-medium">{{ chapters.length }} chương</span>
-        </div>
-
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-          <div
-            v-for="chap in chapters"
-            :key="chap.id"
-            @click="selectChapter(chap)"
-            :class="[
-              'relative p-4 rounded-2xl cursor-pointer text-center transition-all duration-200 select-none flex flex-col items-center justify-between min-h-[120px]',
-              chap.id === activeChapter.id
-                ? 'bg-white ring-2 ring-indigo-500 shadow-lg shadow-indigo-100'
-                : 'bg-white/80 border border-gray-100 hover:bg-white hover:shadow-md'
-            ]"
-          >
-            <div
-              :class="[
-                'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold mb-2',
-                chap.id === activeChapter.id
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-500'
-              ]"
-            >
-              <span v-if="!chap.isLocked">{{ chap.id }}</span>
-              <span v-else class="text-[10px]">🔒</span>
+      <!-- 6 Chapters Grid -->
+      <div class="grid md:grid-cols-2 gap-6">
+        <div
+          v-for="chap in a1Chapters"
+          :key="chap.id"
+          class="bg-white/70 backdrop-blur-xl rounded-3xl p-6 sm:p-7 shadow-lg hover:shadow-xl transition-all border border-white/80 flex flex-col justify-between"
+        >
+          <!-- Top Content -->
+          <div>
+            <div class="flex items-start justify-between gap-4 mb-3">
+              <div>
+                <span class="text-xs font-black text-indigo-600 tracking-wider uppercase">
+                  CHƯƠNG {{ chap.id }} • {{ chap.wordCount }} TỪ
+                </span>
+                <h3 class="text-xl font-bold text-slate-800 mt-1">{{ chap.title }}</h3>
+              </div>
+              <div class="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-xl shrink-0">
+                {{ chap.icon }}
+              </div>
             </div>
 
-            <div class="my-auto">
-              <p class="font-bold text-sm text-slate-800 line-clamp-1">{{ chap.title }}</p>
-              <p class="text-xs text-gray-400 mt-0.5">{{ chap.wordsCount }} từ</p>
-            </div>
-
-            <p v-if="chap.isLocked" class="text-[10px] text-gray-400 mt-1 flex items-center gap-0.5">
-              Hoàn thành trước
+            <p class="text-sm text-slate-600 leading-relaxed mb-6">
+              {{ chap.description }}
             </p>
           </div>
-        </div>
-      </div>
 
-      <div class="bg-white/70 backdrop-blur-md rounded-3xl p-6 border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <span class="text-xs font-extrabold tracking-wider text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase">
-            Chương {{ activeChapter.id }}
-          </span>
-          <h2 class="text-2xl font-bold text-slate-800 mt-2">{{ activeChapter.title }}</h2>
-          <p class="text-sm text-gray-500 mt-1">{{ activeChapter.description }}</p>
-        </div>
-        <div class="text-xs font-medium text-gray-500 bg-gray-100 px-3 py-1.5 rounded-xl self-start md:self-auto">
-          {{ activeChapter.lessons.length }} bài học
-        </div>
-      </div>
-
-      <div class="space-y-4">
-        <div
-          v-for="lesson in activeChapter.lessons"
-          :key="lesson.type"
-          :class="[
-            'p-5 rounded-3xl border transition-all duration-200 flex items-center justify-between',
-            lesson.status === 'completed'
-              ? 'bg-white border-emerald-200 shadow-sm'
-              : 'bg-white border-gray-100 hover:shadow-md'
-          ]"
-        >
-          <div class="flex items-center space-x-4">
-            <div
-              :class="[
-                'w-11 h-11 rounded-2xl flex items-center justify-center text-base font-bold shadow-sm',
-                lesson.status === 'completed' ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600'
-              ]"
-            >
-              <span v-if="lesson.status === 'completed'">✓</span>
-              <span v-else>{{ lesson.icon }}</span>
-            </div>
-
-            <div>
-              <div class="flex items-center space-x-2">
-                <p class="font-bold text-slate-800 text-base">
-                  {{ lesson.title }}
-                </p>
-                <span v-if="lesson.isNew" class="text-[10px] bg-blue-50 text-blue-600 font-bold px-2 py-0.5 rounded-full">
-                  MỚI
-                </span>
-                <span v-if="lesson.status === 'completed'" class="text-[10px] bg-emerald-50 text-emerald-600 font-bold px-2 py-0.5 rounded-full">
-                  ĐÃ HOÀN THÀNH
-                </span>
-              </div>
-              <p class="text-xs text-gray-500 mt-0.5">{{ lesson.description }}</p>
+          <!-- 4 Learning Parts -->
+          <div>
+            <p class="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-3">
+              4 PHẦN HỌC TẬP:
+            </p>
+            <div class="grid grid-cols-2 gap-2.5">
+              <button
+                v-for="part in learningParts"
+                :key="part.type"
+                @click="goToStudy(chap.id, part.type)"
+                class="flex items-center space-x-2.5 px-3.5 py-2.5 rounded-xl bg-white/80 hover:bg-indigo-50 border border-slate-100 hover:border-indigo-200 text-slate-700 hover:text-indigo-600 transition-all shadow-sm text-left group"
+              >
+                <span class="text-base group-hover:scale-110 transition-transform">{{ part.icon }}</span>
+                <span class="text-xs font-bold truncate">{{ part.title }}</span>
+              </button>
             </div>
           </div>
-
-          <div class="flex items-center space-x-4">
-            <span class="text-xs text-gray-400 font-medium hidden sm:inline-block">
-              {{ lesson.questionsCount }} câu
-            </span>
-
-            <button
-              @click="startLesson(lesson)"
-              :class="[
-                'px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-1.5 shadow-sm',
-                lesson.status === 'completed'
-                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                  : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-              ]"
-            >
-              <span>{{ lesson.status === 'completed' ? 'Ôn tập' : 'Bắt đầu' }}</span>
-              <span v-if="lesson.status === 'completed'">↺</span>
-              <span v-else>→</span>
-            </button>
-          </div>
         </div>
       </div>
-
-    </div>
+    </main>
   </div>
 </template>
 
 <script>
+import Header from '@/components/Home/Header.vue'
+
 export default {
   name: 'RoadmapView',
+  components: {
+    Header
+  },
   data() {
     return {
-      chapters: [
+      learningParts: [
+        { type: 'vocab', title: 'Từ vựng', icon: '📖' },
+        { type: 'listen', title: 'Nghe hiểu', icon: '🎧' },
+        { type: 'sentence', title: 'Đặt câu', icon: '✍️' },
+        { type: 'review', title: 'Ôn tập', icon: '🎯' }
+      ],
+      a1Chapters: [
         {
           id: 1,
           title: 'Gia đình',
-          wordsCount: 20,
-          isLocked: false,
-          description: 'Các từ vựng cơ bản và xưng hô về chủ đề gia đình',
-          lessons: [
-            {
-              type: 'vocabulary',
-              title: 'Khám phá từ mới • Gia đình',
-              description: 'Học phát âm và ghi nhớ mặt chữ.',
-              questionsCount: 6,
-              icon: '📖',
-              status: 'completed',
-              isNew: false
-            },
-            {
-              type: 'listening',
-              title: 'Luyện nghe phản xạ • Gia đình',
-              description: 'Nghe nhận diện giọng đọc chuẩn và phân biệt từ dễ nhầm.',
-              questionsCount: 8,
-              icon: '🎧',
-              status: 'pending',
-              isNew: true
-            },
-            {
-              type: 'sentence',
-              title: 'Mẫu câu giao tiếp • Gia đình',
-              description: 'Ghép từ thành câu hoàn chỉnh và diễn đạt ý cơ bản.',
-              questionsCount: 5,
-              icon: '💬',
-              status: 'pending',
-              isNew: false
-            },
-            {
-              type: 'review',
-              title: 'Ôn tập & Kiểm tra nhanh',
-              description: 'Củng cố kiến thức toàn bộ chương 1 để mở khóa chương sau.',
-              questionsCount: 10,
-              icon: '🎯',
-              status: 'pending',
-              isNew: false
-            }
-          ]
+          wordCount: 20,
+          icon: '👨‍👩‍👧',
+          description: 'Làm quen với các từ vựng chỉ thành viên trong gia đình, các mối quan hệ thân thiết và đại từ xưng hô cơ bản.'
         },
         {
           id: 2,
           title: 'Màu sắc',
-          wordsCount: 19,
-          isLocked: true,
-          description: 'Học nhận biết và mô tả màu sắc của các đồ vật quen thuộc',
-          lessons: [
-            { type: 'vocabulary', title: 'Từ vựng Màu sắc', description: 'Tên các màu sắc cơ bản và sắc thái.', questionsCount: 6, icon: '📖', status: 'pending' },
-            { type: 'listening', title: 'Luyện nghe Màu sắc', description: 'Nghe đoạn hội thoại mô tả màu.', questionsCount: 6, icon: '🎧', status: 'pending' },
-            { type: 'sentence', title: 'Mẫu câu chỉ màu sắc', description: 'Cấu trúc miêu tả màu đồ vật.', questionsCount: 5, icon: '💬', status: 'pending' },
-            { type: 'review', title: 'Ôn tập Chương 2', description: 'Bài kiểm tra tổng hợp chương Màu sắc.', questionsCount: 10, icon: '🎯', status: 'pending' }
-          ]
+          wordCount: 19,
+          icon: '🎨',
+          description: 'Học bảng màu sắc thông dụng, cách mô tả đặc điểm hình dáng, sắc thái đồ vật xung quanh bạn.'
         },
         {
           id: 3,
           title: 'Động vật',
-          wordsCount: 9,
-          isLocked: true,
-          description: 'Tên các loài vật nuôi và động vật quen thuộc xung quanh bạn',
-          lessons: [
-            { type: 'vocabulary', title: 'Từ vựng Động vật', description: 'Thú cưng và động vật nông trại.', questionsCount: 6, icon: '📖', status: 'pending' },
-            { type: 'listening', title: 'Luyện nghe Động vật', description: 'Nhận diện loài vật qua phát âm.', questionsCount: 6, icon: '🎧', status: 'pending' },
-            { type: 'sentence', title: 'Mẫu câu miêu tả loài vật', description: 'Cách đặt câu đơn giản về thú cưng.', questionsCount: 5, icon: '💬', status: 'pending' },
-            { type: 'review', title: 'Ôn tập Chương 3', description: 'Kiểm tra tổng hợp chương Động vật.', questionsCount: 10, icon: '🎯', status: 'pending' }
-          ]
+          wordCount: 9,
+          icon: '🐾',
+          description: 'Tên gọi các loài thú cưng quen thuộc, động vật nông trại và cách diễn đạt sở thích về thú nuôi.'
         },
         {
           id: 4,
           title: 'Thức ăn',
-          wordsCount: 9,
-          isLocked: true,
-          description: 'Từ vựng về món ăn, hoa quả, đồ uống thường ngày',
-          lessons: [
-            { type: 'vocabulary', title: 'Từ vựng Thức ăn', description: 'Món ăn hàng ngày và đồ uống.', questionsCount: 6, icon: '📖', status: 'pending' },
-            { type: 'listening', title: 'Luyện nghe Đồ ăn', description: 'Nghe gọi món cơ bản.', questionsCount: 6, icon: '🎧', status: 'pending' },
-            { type: 'sentence', title: 'Mẫu câu Gọi món', description: 'Cấu trúc biểu đạt món ăn yêu thích.', questionsCount: 5, icon: '💬', status: 'pending' },
-            { type: 'review', title: 'Ôn tập Chương 4', description: 'Kiểm tra từ vựng món ăn.', questionsCount: 10, icon: '🎯', status: 'pending' }
-          ]
+          wordCount: 9,
+          icon: '🍔',
+          description: 'Từ vựng đồ ăn, thức uống thường ngày cùng các cấu trúc câu giao tiếp gọi món và biểu đạt khẩu vị.'
         },
         {
           id: 5,
           title: 'Công việc',
-          wordsCount: 5,
-          isLocked: true,
-          description: 'Các chức danh, nghề nghiệp cơ bản và nơi làm việc',
-          lessons: [
-            { type: 'vocabulary', title: 'Từ vựng Nghề nghiệp', description: 'Nghề nghiệp phổ biến xã hội.', questionsCount: 5, icon: '📖', status: 'pending' },
-            { type: 'listening', title: 'Luyện nghe Nghề nghiệp', description: 'Nghe người khác giới thiệu nghề.', questionsCount: 5, icon: '🎧', status: 'pending' },
-            { type: 'sentence', title: 'Mẫu câu Hỏi nghề nghiệp', description: 'Hỏi và trả lời "Bạn làm nghề gì?".', questionsCount: 5, icon: '💬', status: 'pending' },
-            { type: 'review', title: 'Ôn tập Chương 5', description: 'Bài tổng hợp kiến thức nghề nghiệp.', questionsCount: 10, icon: '🎯', status: 'pending' }
-          ]
+          wordCount: 5,
+          icon: '💼',
+          description: 'Tìm hiểu danh xưng nghề nghiệp phổ biến, nơi làm việc và mẫu câu giới thiệu công việc của bản thân.'
         },
         {
           id: 6,
           title: 'Cảm xúc',
-          wordsCount: 5,
-          isLocked: true,
-          description: 'Biểu đạt tâm trạng vui, buồn, mệt mỏi và cảm xúc thường nhật',
-          lessons: [
-            { type: 'vocabulary', title: 'Từ vựng Cảm xúc', description: 'Tâm trạng và trạng thái cảm xúc.', questionsCount: 5, icon: '📖', status: 'pending' },
-            { type: 'listening', title: 'Luyện nghe Cảm xúc', description: 'Cảm nhận giọng nói và trạng thái.', questionsCount: 5, icon: '🎧', status: 'pending' },
-            { type: 'sentence', title: 'Mẫu câu Bày tỏ cảm xúc', description: 'Hỏi thăm và chia sẻ tâm trạng bản thân.', questionsCount: 5, icon: '💬', status: 'pending' },
-            { type: 'review', title: 'Ôn tập Chương 6', description: 'Kiểm tra tốt nghiệp cấp độ A1.', questionsCount: 10, icon: '🎯', status: 'pending' }
-          ]
+          wordCount: 5,
+          icon: '😊',
+          description: 'Từ vựng diễn tả trạng thái cảm xúc, tâm trạng vui buồn, mệt mỏi và cách hỏi thăm người đối diện.'
         }
-      ],
-      activeChapter: null
+      ]
     }
   },
-  created() {
-    this.activeChapter = this.chapters[0];
-  },
   methods: {
-    selectChapter(chap) {
-      this.activeChapter = chap;
+    checkIsLoggedIn() {
+      const token = localStorage.getItem('token') || localStorage.getItem('access_token') || sessionStorage.getItem('token');
+      const user = localStorage.getItem('user');
+      return Boolean(token || user);
     },
-    startLesson(lesson) {
-      console.log('Bắt đầu phần học:', lesson.title);
-      // Điều hướng vào màn làm bài, ví dụ: this.$router.push(`/study/${lesson.type}`);
+    goToStudy(chapterId, partType) {
+      const targetPath = `/study/a1/chapter-${chapterId}/${partType}`;
+      if (this.checkIsLoggedIn()) {
+        this.$router.push(targetPath);
+      } else {
+        this.$router.push({ path: '/login', query: { redirect: targetPath } });
+      }
     }
   }
 }
 </script>
+
+<style scoped>
+@import "@/assets/View/HomeView.css";
+</style>

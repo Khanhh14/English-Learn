@@ -21,7 +21,7 @@
           <router-link 
             to="/" 
             class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors"
-            :class="{ 'text-indigo-600 font-bold border-b-2 border-indigo-600 pb-0.5': $route.path === '/' && !$route.hash }"
+            :class="{ 'text-indigo-600 font-bold border-b-2 border-indigo-600 pb-0.5': $route.path === '/' }"
           >
             Trang chủ
           </router-link>
@@ -34,14 +34,14 @@
             Về chúng tôi
           </router-link>
 
-          <!-- Nút Lộ trình Desktop -->
-          <button 
-            type="button"
-            @click="navigateToRoadmap" 
-            class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors cursor-pointer"
+          <!-- Chuyển hướng thẳng sang trang Lộ trình riêng biệt -->
+          <router-link 
+            to="/roadmap/a1" 
+            class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors"
+            :class="{ 'text-indigo-600 font-bold border-b-2 border-indigo-600 pb-0.5': $route.path.startsWith('/roadmap') }"
           >
             Lộ trình
-          </button>
+          </router-link>
           
           <!-- STATE: ĐÃ ĐĂNG NHẬP -->
           <div v-if="isLoggedIn" class="relative">
@@ -49,15 +49,10 @@
               @click.stop="toggleUserDropdown" 
               class="flex items-center gap-2.5 rounded-full border border-white/80 bg-white/80 py-1.5 pl-1.5 pr-3 shadow-md backdrop-blur-md transition-all hover:bg-white hover:shadow-lg active:scale-95"
             >
-              <!-- Avatar Circle -->
               <div class="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 text-xs font-black text-white shadow-sm ring-2 ring-indigo-100">
                 {{ userInitials }}
               </div>
-              
-              <!-- Name -->
               <span class="max-w-[110px] truncate text-xs font-extrabold text-slate-700">{{ userDisplayName }}</span>
-              
-              <!-- Chevron -->
               <div class="flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-slate-500">
                 <svg class="h-3 w-3 transition-transform duration-200" :class="{ 'rotate-180': isUserDropdownOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
@@ -78,7 +73,6 @@
                 v-if="isUserDropdownOpen" 
                 class="absolute right-0 mt-3 w-60 rounded-3xl border border-white/80 bg-white/95 p-3.5 shadow-2xl shadow-indigo-500/10 backdrop-blur-2xl ring-1 ring-slate-900/5"
               >
-                <!-- Compact User Card -->
                 <div class="mb-3 flex items-center gap-3 px-1">
                   <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 font-black text-white text-sm shadow-md">
                     {{ userInitials }}
@@ -92,7 +86,6 @@
                 </div>
 
                 <div class="space-y-1">
-                  <!-- Nút Xem thông tin cá nhân -->
                   <router-link 
                     :to="{ path: '/dashboard', query: { tab: 'profile' } }"
                     @click="closeUserDropdown"
@@ -102,7 +95,6 @@
                     <span>Xem thông tin cá nhân</span>
                   </router-link>
 
-                  <!-- Nút Đăng xuất -->
                   <button 
                     @click="handleLogout" 
                     class="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-extrabold text-rose-600 transition hover:bg-rose-50"
@@ -138,11 +130,12 @@
           <router-link 
             to="/" 
             class="text-gray-600 hover:text-indigo-600 transition-colors font-medium px-4 py-2 hover:bg-white/30 rounded-xl"
-            :class="{ 'text-indigo-600 font-bold bg-white/30': $route.path === '/' && !$route.hash }"
+            :class="{ 'text-indigo-600 font-bold bg-white/30': $route.path === '/' }"
             @click="closeMobileMenu"
           >
             🏠 Trang chủ
           </router-link>
+
           <router-link 
             to="/about" 
             class="text-gray-600 hover:text-indigo-600 transition-colors font-medium px-4 py-2 hover:bg-white/30 rounded-xl"
@@ -152,14 +145,14 @@
             ℹ️ Về chúng tôi
           </router-link>
 
-          <!-- Nút Lộ trình Mobile -->
-          <button 
-            type="button"
-            @click="navigateToRoadmap" 
-            class="text-left text-gray-600 hover:text-indigo-600 transition-colors font-medium px-4 py-2 hover:bg-white/30 rounded-xl cursor-pointer"
+          <router-link 
+            to="/roadmap/a1" 
+            class="text-gray-600 hover:text-indigo-600 transition-colors font-medium px-4 py-2 hover:bg-white/30 rounded-xl"
+            :class="{ 'text-indigo-600 font-bold bg-white/30': $route.path.startsWith('/roadmap') }"
+            @click="closeMobileMenu"
           >
             🗺️ Lộ trình
-          </button>
+          </router-link>
           
           <!-- Mobile Logged In State -->
           <template v-if="isLoggedIn">
@@ -257,25 +250,6 @@ export default {
       } else {
         this.isLoggedIn = false;
         this.currentUser = null;
-      }
-    },
-    navigateToRoadmap() {
-      this.closeMobileMenu();
-
-      if (this.$route.path === '/') {
-        const element = document.getElementById('roadmap');
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      } else {
-        this.$router.push('/#roadmap').then(() => {
-          this.$nextTick(() => {
-            const element = document.getElementById('roadmap');
-            if (element) {
-              element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-          });
-        });
       }
     },
     toggleMobileMenu() {
