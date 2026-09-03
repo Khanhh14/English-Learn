@@ -21,10 +21,11 @@
           <router-link 
             to="/" 
             class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors"
-            :class="{ 'text-indigo-600 font-bold border-b-2 border-indigo-600 pb-0.5': $route.path === '/' }"
+            :class="{ 'text-indigo-600 font-bold border-b-2 border-indigo-600 pb-0.5': $route.path === '/' && !$route.hash }"
           >
             Trang chủ
           </router-link>
+          
           <router-link 
             to="/about" 
             class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors"
@@ -32,7 +33,15 @@
           >
             Về chúng tôi
           </router-link>
-          <a href="#" class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors">Lộ trình</a>
+
+          <!-- Nút Lộ trình Desktop -->
+          <button 
+            type="button"
+            @click="navigateToRoadmap" 
+            class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors cursor-pointer"
+          >
+            Lộ trình
+          </button>
           
           <!-- STATE: ĐÃ ĐĂNG NHẬP -->
           <div v-if="isLoggedIn" class="relative">
@@ -129,7 +138,7 @@
           <router-link 
             to="/" 
             class="text-gray-600 hover:text-indigo-600 transition-colors font-medium px-4 py-2 hover:bg-white/30 rounded-xl"
-            :class="{ 'text-indigo-600 font-bold bg-white/30': $route.path === '/' }"
+            :class="{ 'text-indigo-600 font-bold bg-white/30': $route.path === '/' && !$route.hash }"
             @click="closeMobileMenu"
           >
             🏠 Trang chủ
@@ -142,7 +151,15 @@
           >
             ℹ️ Về chúng tôi
           </router-link>
-          <a href="#" class="text-gray-600 hover:text-indigo-600 transition-colors font-medium px-4 py-2 hover:bg-white/30 rounded-xl">🗺️ Lộ trình</a>
+
+          <!-- Nút Lộ trình Mobile -->
+          <button 
+            type="button"
+            @click="navigateToRoadmap" 
+            class="text-left text-gray-600 hover:text-indigo-600 transition-colors font-medium px-4 py-2 hover:bg-white/30 rounded-xl cursor-pointer"
+          >
+            🗺️ Lộ trình
+          </button>
           
           <!-- Mobile Logged In State -->
           <template v-if="isLoggedIn">
@@ -240,6 +257,25 @@ export default {
       } else {
         this.isLoggedIn = false;
         this.currentUser = null;
+      }
+    },
+    navigateToRoadmap() {
+      this.closeMobileMenu();
+
+      if (this.$route.path === '/') {
+        const element = document.getElementById('roadmap');
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      } else {
+        this.$router.push('/#roadmap').then(() => {
+          this.$nextTick(() => {
+            const element = document.getElementById('roadmap');
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          });
+        });
       }
     },
     toggleMobileMenu() {
