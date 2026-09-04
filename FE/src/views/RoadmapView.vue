@@ -17,10 +17,11 @@
         <!-- Page Title -->
         <div class="text-center mb-12">
           <h1 class="text-4xl md:text-5xl font-bold mb-4">
-            <span class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-              📚 Lộ trình học tập
-            </span>
-          </h1>
+          <span class="mr-2">📚</span>
+          <span class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+            Lộ trình học tập
+          </span>
+        </h1>
           <p class="text-gray-600 text-lg">Từ cơ bản đến nâng cao, phù hợp với mọi trình độ</p>
         </div>
 
