@@ -53,6 +53,14 @@
     </div>
 
     <!-- Danh Sách Nhiệm Vụ Rỗng -->
+    <div v-else-if="errorMessage" class="text-center py-12 bg-white rounded-2xl border border-red-200">
+      <span class="text-4xl">⚠️</span>
+      <p class="mt-2 text-red-600 text-sm">{{ errorMessage }}</p>
+      <button @click="fetchMissions" class="mt-4 px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold">
+        Thử lại
+      </button>
+    </div>
+
     <div v-else-if="missions.length === 0" class="text-center py-12 bg-white rounded-2xl border border-gray-200">
       <span class="text-4xl">🎉</span>
       <p class="mt-2 text-gray-500 text-sm">Hôm nay chưa có nhiệm vụ nào mới!</p>
@@ -149,9 +157,16 @@ const missions = ref([]);
 const totalCoins = ref(0);
 const isLoading = ref(true);
 const claimingId = ref(null);
+const errorMessage = ref('');
 
-// Lấy user ID từ localStorage (hoặc thay bằng store auth/pinia của bạn)
-const currentUserId = ref(localStorage.getItem('userId') || 1);
+let storedUser = null;
+try {
+  storedUser = JSON.parse(localStorage.getItem('user') || 'null');
+} catch (error) {
+  console.warn('Không thể đọc thông tin người dùng đã lưu:', error);
+}
+const currentUserId = ref(storedUser?.id || localStorage.getItem('userId'));
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
 
 const completedCount = computed(() => missions.value.filter(m => m.completed).length);
 const progressPercentage = computed(() => {
@@ -172,16 +187,28 @@ const getFallbackIcon = (title = '') => {
 // Gọi API lấy dữ liệu nhiệm vụ từ backend
 const fetchMissions = async () => {
   isLoading.value = true;
+  errorMessage.value = '';
   try {
-    const res = await fetch(`http://localhost:4000/api/quests/user/${currentUserId.value}`);
+    if (!currentUserId.value) {
+      throw new Error('Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.');
+    }
+
+    const headers = {};
+    const token = localStorage.getItem('token');
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    const res = await fetch(`${apiBaseUrl}/api/quests/user/${currentUserId.value}`, { headers });
     const data = await res.json();
     
-    if (res.ok) {
-      missions.value = data.missions || [];
-      totalCoins.value = data.totalCoins || 0;
+    if (!res.ok) {
+      throw new Error(data.message || 'Không thể tải danh sách nhiệm vụ.');
     }
+
+    missions.value = Array.isArray(data.missions) ? data.missions : [];
+    totalCoins.value = Number(data.totalCoins) || 0;
   } catch (error) {
     console.error('Không thể tải danh sách nhiệm vụ:', error);
+    errorMessage.value = error.message || 'Không thể tải danh sách nhiệm vụ.';
   } finally {
     isLoading.value = false;
   }
@@ -191,9 +218,13 @@ const fetchMissions = async () => {
 const claimReward = async (mission) => {
   claimingId.value = mission.id;
   try {
-    const res = await fetch('http://localhost:4000/api/quests/claim', {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${apiBaseUrl}/api/quests/claim`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
       body: JSON.stringify({ 
         userId: currentUserId.value, 
         questId: mission.id 

@@ -6,6 +6,10 @@ exports.getUserMissions = async (req, res) => {
   const { userId } = req.params;
   const today = new Date().toISOString().slice(0, 10);
 
+  if (!Number.isInteger(Number(userId)) || Number(userId) <= 0) {
+    return res.status(400).json({ message: 'Mã người dùng không hợp lệ' });
+  }
+
   try {
     // Tự động gán nhiệm vụ ngày hôm nay nếu chưa có
     await pool.query(`
@@ -15,7 +19,7 @@ exports.getUserMissions = async (req, res) => {
 
     const [missions] = await pool.query(`
       SELECT 
-        q.id, q.title AS name, q.icon, q.description, 
+        q.id, q.title AS name,
         q.reward_coins AS reward, q.target_count AS total,
         uq.current_progress AS progress, uq.is_claimed AS completed
       FROM quests q
@@ -23,13 +27,14 @@ exports.getUserMissions = async (req, res) => {
       WHERE uq.user_id = ? AND uq.quest_date = ?
     `, [userId, today]);
 
-    const [[user]] = await pool.query(`SELECT coins FROM users WHERE id = ?`, [userId]);
+    const [[user]] = await pool.query(`SELECT xp FROM users WHERE id = ?`, [userId]);
 
     return res.json({
       missions,
-      totalCoins: user ? user.coins : 0
+      totalCoins: user ? user.xp : 0
     });
   } catch (error) {
+    console.error('Lỗi lấy dữ liệu nhiệm vụ:', error);
     return res.status(500).json({ message: 'Lỗi lấy dữ liệu nhiệm vụ', error: error.message });
   }
 };
@@ -38,9 +43,14 @@ exports.getUserMissions = async (req, res) => {
 exports.claimMissionReward = async (req, res) => {
   const { userId, questId } = req.body;
   const today = new Date().toISOString().slice(0, 10);
-  const conn = await pool.getConnection();
+  let conn;
 
   try {
+    if (!Number.isInteger(Number(userId)) || !Number.isInteger(Number(questId))) {
+      return res.status(400).json({ message: 'Thông tin nhiệm vụ không hợp lệ' });
+    }
+
+    conn = await pool.getConnection();
     await conn.beginTransaction();
 
     const [quest] = await conn.query(`
@@ -73,19 +83,24 @@ exports.claimMissionReward = async (req, res) => {
       WHERE id = ?
     `, [item.id]);
 
-    // Cộng xu cho user
+    // XP là đơn vị xu hiện có trong bảng users.
     await conn.query(`
       UPDATE users 
-      SET coins = coins + ? 
+      SET xp = xp + ?
       WHERE id = ?
     `, [item.reward_coins, userId]);
 
     await conn.commit();
     return res.json({ success: true, reward: item.reward_coins });
   } catch (error) {
-    await conn.rollback();
+    if (conn) {
+      await conn.rollback();
+    }
+    console.error('Lỗi nhận thưởng nhiệm vụ:', error);
     return res.status(500).json({ message: 'Giao dịch thất bại', error: error.message });
   } finally {
-    conn.release();
+    if (conn) {
+      conn.release();
+    }
   }
 };

@@ -38,9 +38,10 @@ exports.register = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    // Thêm coins mặc định là 0
     await db.query(
-      'INSERT INTO users (username, email, password, role, streak_count, daily_goal, xp) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [username, email, hashedPassword, 'user', 0, 10, 0]
+      'INSERT INTO users (username, email, password, role, streak_count, daily_goal, xp, coins) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [username, email, hashedPassword, 'user', 0, 10, 0, 0]
     );
 
     res.status(201).json({ message: 'Đăng ký tài khoản thành công!' });
@@ -84,6 +85,7 @@ exports.login = async (req, res) => {
         role: user.role,
         xp: user.xp || 0,
         points: user.xp || 0,
+        coins: user.coins || 0, // Trả về số xu
         joinDate: user.created_at,
         ...stats
       }
@@ -98,8 +100,9 @@ exports.getMe = async (req, res) => {
   try {
     const userId = req.user?.id || req.query.userId || 1;
 
+    // Bổ sung coins vào câu SELECT
     const [users] = await db.query(
-      'SELECT id, username, email, role, streak_count, daily_goal, xp, created_at FROM users WHERE id = ?',
+      'SELECT id, username, email, role, streak_count, daily_goal, xp, coins, created_at FROM users WHERE id = ?',
       [userId]
     );
 
@@ -121,6 +124,7 @@ exports.getMe = async (req, res) => {
         dailyGoal: user.daily_goal || 10,
         xp: user.xp || 0,
         points: user.xp || 0,
+        coins: user.coins || 0, // Trả về số xu
         joinDate: user.created_at,
         ...stats
       }

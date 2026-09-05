@@ -74,11 +74,15 @@
               </div>
 
               <div v-if="activeTab === 'shop'" class="h-full overflow-auto">
-                <ShopTab />
+                <ShopTab :user="user" @update-user="updateUser" />
               </div>
 
               <div v-if="activeTab === 'missions'" class="h-full overflow-auto">
-                <MissionsTab />
+                <MissionsTab 
+                  :user="user" 
+                  @change-tab="activeTab = $event" 
+                  @update-user="updateUser" 
+                />
               </div>
 
               <div v-if="activeTab === 'profile'" class="h-full overflow-auto">
@@ -121,6 +125,8 @@ export default {
         avatar: '',
         level: 1,
         points: 0,
+        xp: 0,
+        coins: 0, // Bổ sung trường coin
         progress: 0,
         joinDate: '',
         streak: 0,
