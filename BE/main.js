@@ -21,6 +21,7 @@ const vocabRoutes = require('./src/routes/vocab.routes');
 const vocabProgressRoutes = require('./src/routes/vocabProgress.routes');
 const streakRoutes = require('./src/routes/streak.routes');
 const rankingRoutes = require('./src/routes/ranking.routes');
+const questsRoutes = require('./src/routes/quests.routes');
 
 // Đăng ký API Routes
 app.use('/api/auth', authRoutes);
@@ -29,6 +30,7 @@ app.use('/api/vocab', vocabProgressRoutes);
 app.use('/api/vocab-progress', vocabProgressRoutes); 
 app.use('/api/streak', streakRoutes);
 app.use('/api/ranking', rankingRoutes); 
+app.use('/api/quests', questsRoutes);
 
 // Endpoint kiểm tra hoạt động của server
 app.get('/api/health', (req, res) => {

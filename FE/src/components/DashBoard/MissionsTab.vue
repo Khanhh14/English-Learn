@@ -1,144 +1,220 @@
 <!-- src/components/Dashboard/MissionsTab.vue -->
 <template>
-  <div>
-    <div class="flex items-center justify-between mb-6">
-      <h2 class="text-2xl font-bold text-gray-800">🎯 Nhiệm vụ</h2>
-      <span class="text-sm text-gray-500">{{ completedMissions }}/{{ missions.length }} đã hoàn thành</span>
+  <div class="max-w-4xl mx-auto space-y-6">
+    <!-- Header Thống Kê -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="md:col-span-2 bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-3xl p-6 shadow-xl shadow-indigo-100 relative overflow-hidden flex flex-col justify-between">
+        <div class="relative z-10">
+          <div class="flex items-center space-x-2 text-indigo-200 text-sm font-semibold uppercase tracking-wider mb-1">
+            <span>⚡ Thử thách mỗi ngày</span>
+          </div>
+          <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight">Hoàn thành nhiệm vụ</h2>
+          <p class="text-indigo-100 text-sm mt-1">Tích lũy xu để mở khóa vật phẩm trong Cửa Hàng.</p>
+        </div>
+
+        <div class="mt-6 relative z-10">
+          <div class="flex justify-between items-center text-xs font-semibold mb-2">
+            <span>Tiến độ ngày</span>
+            <span>{{ completedCount }} / {{ missions.length }} hoàn thành</span>
+          </div>
+          <div class="w-full bg-white/20 rounded-full h-3 backdrop-blur-sm overflow-hidden p-0.5">
+            <div 
+              class="bg-white rounded-full h-full transition-all duration-700 ease-out shadow-sm"
+              :style="{ width: `${progressPercentage}%` }"
+            ></div>
+          </div>
+        </div>
+
+        <div class="absolute -right-8 -bottom-8 w-36 h-36 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+      </div>
+
+      <!-- Card Xu -->
+      <div class="bg-gradient-to-br from-amber-500 to-orange-500 text-white rounded-3xl p-6 shadow-xl shadow-orange-100 flex flex-col justify-between relative overflow-hidden">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold uppercase tracking-wider text-amber-100">Kho Báu Của Bạn</span>
+          <span class="text-2xl">🪙</span>
+        </div>
+        <div class="my-4">
+          <div class="text-4xl font-black tracking-tight">{{ totalCoins.toLocaleString() }}</div>
+          <span class="text-xs text-amber-100 font-medium">Xu khả dụng</span>
+        </div>
+        <router-link 
+          to="/dashboard/shop" 
+          class="w-full py-2.5 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-xl text-xs font-bold transition-all text-center"
+        >
+          Vào Cửa Hàng Đổi Quà →
+        </router-link>
+      </div>
     </div>
 
-    <div class="space-y-4">
-      <div v-for="mission in missions" :key="mission.id" 
-        class="flex items-center justify-between p-4 bg-white/70 backdrop-blur-sm rounded-2xl border hover:shadow-lg transition-all"
-        :class="mission.completed ? 'border-green-200 bg-green-50/50' : 'border-gray-200'">
-        <div class="flex items-center space-x-4 flex-1">
-          <div class="w-12 h-12 rounded-full flex items-center justify-center text-2xl flex-shrink-0" 
-            :class="mission.completed ? 'bg-green-100' : 'bg-indigo-100'">
-            {{ mission.completed ? '✅' : mission.icon }}
+    <!-- Trạng thái Loading -->
+    <div v-if="isLoading" class="space-y-3">
+      <div v-for="n in 3" :key="n" class="h-20 bg-gray-100 animate-pulse rounded-2xl border border-gray-200"></div>
+    </div>
+
+    <!-- Danh Sách Nhiệm Vụ Rỗng -->
+    <div v-else-if="missions.length === 0" class="text-center py-12 bg-white rounded-2xl border border-gray-200">
+      <span class="text-4xl">🎉</span>
+      <p class="mt-2 text-gray-500 text-sm">Hôm nay chưa có nhiệm vụ nào mới!</p>
+    </div>
+
+    <!-- Danh Sách Nhiệm Vụ Đã Tải -->
+    <div v-else class="space-y-3">
+      <div 
+        v-for="mission in missions" 
+        :key="mission.id"
+        class="group relative bg-white border rounded-2xl p-4 md:p-5 transition-all duration-300 flex flex-col md:flex-row md:items-center justify-between gap-4"
+        :class="mission.completed 
+          ? 'border-gray-100 bg-gray-50/70 opacity-75' 
+          : 'border-gray-200/80 hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-50/50'"
+      >
+        <div class="flex items-center space-x-4 flex-1 min-w-0">
+          <!-- Icon -->
+          <div 
+            class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 shadow-inner transition-transform group-hover:scale-105"
+            :class="mission.completed ? 'bg-emerald-100 text-emerald-600' : 'bg-indigo-50 text-indigo-600'"
+          >
+            <span v-if="mission.completed">✓</span>
+            <span v-else>{{ mission.icon || getFallbackIcon(mission.name) }}</span>
           </div>
-          <div class="flex-1 min-w-0">
+
+          <!-- Nội Dung -->
+          <div class="flex-1 min-w-0 space-y-1">
             <div class="flex items-center space-x-2">
-              <h3 class="font-bold text-gray-800">{{ mission.name }}</h3>
-              <span v-if="mission.completed" class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Hoàn thành</span>
-            </div>
-            <p class="text-sm text-gray-500">{{ mission.description }}</p>
-            <div class="flex items-center space-x-4 mt-2">
-              <span class="text-xs text-yellow-600 flex items-center space-x-1">
-                <span>⭐</span>
-                <span>+{{ mission.reward }} xu</span>
+              <h4 class="font-bold text-gray-800 truncate" :class="{ 'line-through text-gray-400': mission.completed }">
+                {{ mission.name }}
+              </h4>
+              <span 
+                v-if="mission.completed" 
+                class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700"
+              >
+                Đã nhận
               </span>
-              <div class="flex items-center space-x-2 flex-1 max-w-[200px]">
-                <div class="flex-1 bg-gray-200 rounded-full h-2">
-                  <div class="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full transition-all" 
-                    :style="{ width: (mission.progress / mission.total * 100) + '%' }">
-                  </div>
+            </div>
+            <p class="text-xs text-gray-500 truncate">{{ mission.description || 'Hoàn thành chỉ tiêu để nhận xu' }}</p>
+
+            <!-- Tiến độ & Phần thưởng -->
+            <div class="flex items-center space-x-4 pt-1">
+              <div class="flex items-center space-x-1 text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200/50">
+                <span>🪙</span>
+                <span>+{{ mission.reward }} xu</span>
+              </div>
+
+              <!-- Mini Progress Bar -->
+              <div class="flex items-center space-x-2 flex-1 max-w-[180px]">
+                <div class="flex-1 bg-gray-100 h-2 rounded-full overflow-hidden">
+                  <div 
+                    class="h-full rounded-full transition-all duration-500"
+                    :class="mission.completed ? 'bg-emerald-500' : 'bg-indigo-600'"
+                    :style="{ width: `${Math.min((mission.progress / mission.total) * 100, 100)}%` }"
+                  ></div>
                 </div>
-                <span class="text-xs text-gray-400 whitespace-nowrap">{{ mission.progress }}/{{ mission.total }}</span>
+                <span class="text-[11px] font-semibold text-gray-400 tabular-nums">
+                  {{ mission.progress }}/{{ mission.total }}
+                </span>
               </div>
             </div>
           </div>
         </div>
-        <button 
-          v-if="!mission.completed && mission.progress === mission.total"
-          @click="completeMission(mission)"
-          class="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl text-sm font-medium shadow-lg hover:shadow-xl transition-all transform hover:scale-105 ml-4 flex-shrink-0"
-        >
-          Nhận thưởng
-        </button>
-        <span v-else-if="mission.completed" class="text-green-500 text-xl ml-4">✓</span>
-      </div>
-    </div>
 
-    <div class="mt-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border border-purple-100">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-sm font-medium text-gray-700">Tổng xu nhận được từ nhiệm vụ</p>
-          <p class="text-2xl font-bold text-gray-800">+1,250 xu</p>
+        <!-- Nút Nhận Thưởng / Trạng thái -->
+        <div class="flex items-center justify-end md:pl-4">
+          <div v-if="mission.completed" class="text-emerald-500 font-semibold text-xs flex items-center space-x-1 bg-emerald-50 px-3 py-2 rounded-xl">
+            <span>Đã nhận thưởng</span>
+          </div>
+
+          <button 
+            v-else-if="mission.progress >= mission.total"
+            @click="claimReward(mission)"
+            :disabled="claimingId === mission.id"
+            class="w-full md:w-auto px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 disabled:opacity-50 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-200 active:scale-95 transition-all flex items-center justify-center space-x-1.5 animate-pulse cursor-pointer"
+          >
+            <span>{{ claimingId === mission.id ? 'Đang nhận...' : 'Nhận Thưởng' }}</span>
+            <span>🎉</span>
+          </button>
+
+          <div v-else class="text-xs font-semibold text-gray-400 bg-gray-100 px-3 py-2 rounded-xl">
+            Chưa đạt
+          </div>
         </div>
-        <div class="text-4xl">🎁</div>
       </div>
     </div>
   </div>
 </template>
 
-<script>
-export default {
-  name: 'MissionsTab',
-  data() {
-    return {
-      missions: [
-        { 
-          id: 1, 
-          icon: '📚', 
-          name: 'Học 10 từ mới', 
-          description: 'Hoàn thành bài học hôm nay', 
-          reward: 50, 
-          progress: 10, 
-          total: 10,
-          completed: true 
-        },
-        { 
-          id: 2, 
-          icon: '✍️', 
-          name: 'Luyện tập 20 phút', 
-          description: 'Dành thời gian luyện tập hàng ngày', 
-          reward: 75, 
-          progress: 20, 
-          total: 20,
-          completed: true 
-        },
-        { 
-          id: 3, 
-          icon: '🏆', 
-          name: 'Đạt 1000 điểm', 
-          description: 'Tích lũy điểm để lên hạng cao hơn', 
-          reward: 200, 
-          progress: 284, 
-          total: 1000,
-          completed: false 
-        },
-        { 
-          id: 4, 
-          icon: '🔥', 
-          name: 'Duy trì chuỗi 7 ngày', 
-          description: 'Học liên tục không ngắt quãng', 
-          reward: 150, 
-          progress: 7, 
-          total: 7,
-          completed: true 
-        },
-        { 
-          id: 5, 
-          icon: '👥', 
-          name: 'Mời 3 bạn bè', 
-          description: 'Giới thiệu LinguaFlow cho bạn bè', 
-          reward: 300, 
-          progress: 2, 
-          total: 3,
-          completed: false 
-        },
-        { 
-          id: 6, 
-          icon: '🎯', 
-          name: 'Hoàn thành 5 bài tập', 
-          description: 'Làm bài tập trong phần Luyện tập', 
-          reward: 100, 
-          progress: 3, 
-          total: 5,
-          completed: false 
-        }
-      ]
+<script setup>
+import { ref, computed, onMounted } from 'vue';
+
+const missions = ref([]);
+const totalCoins = ref(0);
+const isLoading = ref(true);
+const claimingId = ref(null);
+
+// Lấy user ID từ localStorage (hoặc thay bằng store auth/pinia của bạn)
+const currentUserId = ref(localStorage.getItem('userId') || 1);
+
+const completedCount = computed(() => missions.value.filter(m => m.completed).length);
+const progressPercentage = computed(() => {
+  if (missions.value.length === 0) return 0;
+  return Math.round((completedCount.value / missions.value.length) * 100);
+});
+
+// Tự gán icon tương ứng nếu database không lưu cột icon
+const getFallbackIcon = (title = '') => {
+  const t = title.toLowerCase();
+  if (t.includes('từ')) return '📚';
+  if (t.includes('luyện') || t.includes('tập')) return '✍️';
+  if (t.includes('streak') || t.includes('lửa')) return '🔥';
+  if (t.includes('tuần') || t.includes('điểm') || t.includes('xp')) return '🏆';
+  return '🎯';
+};
+
+// Gọi API lấy dữ liệu nhiệm vụ từ backend
+const fetchMissions = async () => {
+  isLoading.value = true;
+  try {
+    const res = await fetch(`http://localhost:4000/api/quests/user/${currentUserId.value}`);
+    const data = await res.json();
+    
+    if (res.ok) {
+      missions.value = data.missions || [];
+      totalCoins.value = data.totalCoins || 0;
     }
-  },
-  computed: {
-    completedMissions() {
-      return this.missions.filter(m => m.completed).length
-    }
-  },
-  methods: {
-    completeMission(mission) {
-      mission.completed = true
-      alert(`🎉 Hoàn thành nhiệm vụ "${mission.name}"! Nhận được +${mission.reward} xu!`)
-    }
+  } catch (error) {
+    console.error('Không thể tải danh sách nhiệm vụ:', error);
+  } finally {
+    isLoading.value = false;
   }
-}
+};
+
+// Gọi API nhận thưởng
+const claimReward = async (mission) => {
+  claimingId.value = mission.id;
+  try {
+    const res = await fetch('http://localhost:4000/api/quests/claim', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        userId: currentUserId.value, 
+        questId: mission.id 
+      })
+    });
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      mission.completed = true;
+      totalCoins.value += data.reward;
+    } else {
+      alert(data.message || 'Có lỗi xảy ra khi nhận thưởng');
+    }
+  } catch (error) {
+    console.error('Lỗi nhận thưởng:', error);
+  } finally {
+    claimingId.value = null;
+  }
+};
+
+onMounted(() => {
+  fetchMissions();
+});
 </script>
