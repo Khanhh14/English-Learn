@@ -153,6 +153,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 
+const emit = defineEmits(['update-user']);
 const missions = ref([]);
 const totalCoins = ref(0);
 const isLoading = ref(true);
@@ -168,7 +169,7 @@ try {
 const currentUserId = ref(storedUser?.id || localStorage.getItem('userId'));
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
 
-const completedCount = computed(() => missions.value.filter(m => m.completed).length);
+const completedCount = computed(() => missions.value.filter(m => m.isCompleted || m.completed).length);
 const progressPercentage = computed(() => {
   if (missions.value.length === 0) return 0;
   return Math.round((completedCount.value / missions.value.length) * 100);
@@ -234,7 +235,12 @@ const claimReward = async (mission) => {
 
     if (res.ok && data.success) {
       mission.completed = true;
-      totalCoins.value += data.reward;
+      mission.isCompleted = true;
+      totalCoins.value = Number(data.totalCoins) || totalCoins.value + Number(data.reward || 0);
+      const stored = JSON.parse(localStorage.getItem('user') || '{}');
+      const updatedUser = { ...stored, coins: totalCoins.value };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      emit('update-user', { coins: totalCoins.value });
     } else {
       alert(data.message || 'Có lỗi xảy ra khi nhận thưởng');
     }

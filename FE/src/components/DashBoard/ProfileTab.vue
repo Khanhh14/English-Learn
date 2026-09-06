@@ -76,6 +76,16 @@
               </div>
             </div>
           </div>
+
+          <div class="mt-4 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 p-4 text-white shadow-lg">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-semibold text-amber-100">Xu hiện có</span>
+              <span class="text-2xl">🪙</span>
+            </div>
+            <p class="mt-1 text-3xl font-black">
+              {{ Number(currentUser.coins || 0).toLocaleString() }}
+            </p>
+          </div>
         </div>
 
         <!-- Thông tin chi tiết -->
