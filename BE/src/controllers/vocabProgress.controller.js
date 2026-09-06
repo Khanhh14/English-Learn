@@ -1,4 +1,5 @@
 const db = require('../config/db'); // Đường dẫn tới file kết nối pool MySQL (mysql2/promise)
+const { incrementQuestProgress } = require('./quests.controller');
 
 const LESSON_SEQUENCE = ['new-1', 'new-2', 'review-1', 'summary'];
 
@@ -69,7 +70,7 @@ exports.getUserProgress = async (req, res) => {
 // [POST] /api/vocab/complete-lesson
 exports.completeLesson = async (req, res) => {
   try {
-    const { deckId, lessonId } = req.body;
+    const { deckId, lessonId, activityType = 'newLesson' } = req.body;
     const userId = req.user?.id || req.body.userId || 1;
 
     if (!deckId || !lessonId) {
@@ -99,32 +100,21 @@ exports.completeLesson = async (req, res) => {
     `;
     await db.query(queryProgress, [userId, deckId, lessonId]);
 
-    let earnedXp = 0;
+    // Đảm bảo nhiệm vụ trong ngày tồn tại trước khi cập nhật tiến độ.
+    await db.query(`
+      INSERT IGNORE INTO user_quests (user_id, quest_id, quest_date, current_progress, is_completed, is_claimed)
+      SELECT ?, q.id, CURDATE(), 0, FALSE, FALSE
+      FROM quests q
+    `, [userId]);
 
-    // 3. Nếu là lần đầu hoàn thành -> Cộng 10 XP vào users và cập nhật user_daily_stats
+    // Bài mới chỉ tính lần đầu; ôn tập/luyện tập tính mỗi lần hoàn thành một buổi.
+    if (activityType === 'newLesson' && !isAlreadyCompleted) {
+      await incrementQuestProgress(db, userId, 'newLesson');
+    } else if (activityType === 'review' || activityType === 'practice') {
+      await incrementQuestProgress(db, userId, activityType);
+    }
+
     if (!isAlreadyCompleted) {
-      earnedXp = 10;
-
-      // Cộng 10 XP vào bảng users
-      await db.query(
-        'UPDATE users SET xp = COALESCE(xp, 0) + 10 WHERE id = ?',
-        [userId]
-      );
-
-      // Mỗi bài học mới hoàn thành được tính vào tiến độ nhiệm vụ trong ngày.
-      await db.query(`
-        INSERT IGNORE INTO user_quests (user_id, quest_id, quest_date, current_progress, is_completed, is_claimed)
-        SELECT ?, q.id, CURDATE(), 0, FALSE, FALSE
-        FROM quests q
-      `, [userId]);
-      await db.query(`
-        UPDATE user_quests uq
-        JOIN quests q ON q.id = uq.quest_id
-        SET uq.current_progress = LEAST(uq.current_progress + 1, q.target_count),
-            uq.is_completed = (uq.current_progress + 1 >= q.target_count)
-        WHERE uq.user_id = ? AND uq.quest_date = CURDATE() AND uq.is_claimed = 0
-      `, [userId]);
-
       // Cập nhật thống kê ngày vào user_daily_stats
       await db.query(`
         INSERT INTO user_daily_stats (user_id, study_date, words_learned, correct_answers, wrong_answers)
@@ -137,10 +127,9 @@ exports.completeLesson = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: isAlreadyCompleted 
-        ? 'Ôn tập bài học thành công!' 
-        : 'Chúc mừng! Bạn đã hoàn thành bài học mới và nhận được 10 XP.',
-      earnedXp
+      message: isAlreadyCompleted
+        ? 'Ôn tập bài học thành công!'
+        : 'Chúc mừng! Bạn đã hoàn thành bài học mới.'
     });
   } catch (error) {
     console.error('Lỗi cập nhật tiến độ học & XP:', error);

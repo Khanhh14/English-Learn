@@ -1,6 +1,29 @@
 // Import pool kết nối database từ thư mục config của bạn
 const pool = require('../config/db'); // hoặc đường dẫn tới file config db của bạn
 
+const QUEST_TITLE_PATTERNS = {
+  newLesson: '%hoàn thành 1 bài học%',
+  xp: '%kiếm 20 xp%',
+  review: '%ôn tập 1 bài học%',
+  practice: '%luyện tập 1 chương%'
+};
+
+exports.incrementQuestProgress = async (executor, userId, questType, amount = 1) => {
+  const titlePattern = QUEST_TITLE_PATTERNS[questType];
+  if (!titlePattern || amount <= 0) return;
+
+  await executor.query(`
+    UPDATE user_quests uq
+    JOIN quests q ON q.id = uq.quest_id
+    SET uq.current_progress = LEAST(uq.current_progress + ?, q.target_count),
+        uq.is_completed = (uq.current_progress + ? >= q.target_count)
+    WHERE uq.user_id = ?
+      AND uq.quest_date = CURDATE()
+      AND uq.is_claimed = 0
+      AND LOWER(q.title) LIKE ?
+  `, [amount, amount, userId, titlePattern]);
+};
+
 // Lấy danh sách nhiệm vụ và tiến độ
 exports.getUserMissions = async (req, res) => {
   const { userId } = req.params;

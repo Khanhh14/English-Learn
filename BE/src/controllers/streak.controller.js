@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { incrementQuestProgress } = require('./quests.controller');
 
 // --- HÀM TÍNH CHUỖI NGÀY HỌC LIÊN TIẾP (STREAK) ---
 async function calculateUserStreak(userId) {
@@ -89,7 +90,8 @@ exports.recordDailyActivity = async (req, res) => {
 
     // 2. Cộng XP tích lũy trực tiếp vào bảng users
     if (earnedXp > 0) {
-      await db.query('UPDATE users SET xp = xp + ? WHERE id = ?', [earnedXp, userId]);
+      await db.query('UPDATE users SET xp = COALESCE(xp, 0) + ? WHERE id = ?', [earnedXp, userId]);
+      await incrementQuestProgress(db, userId, 'xp', earnedXp);
     }
 
     // 3. Tính toán lại streak thực tế

@@ -405,7 +405,8 @@ export default {
         deckId: chapterId,
         deckTitle: this.selectedChapter ? this.selectedChapter.name : 'Bài học',
         streak: this.streak,
-        isReview: this.isLessonCompleted(chapterId, lessonId)
+        isReview: this.isLessonCompleted(chapterId, lessonId),
+        activityType: this.isLessonCompleted(chapterId, lessonId) ? 'review' : 'newLesson'
       });
     },
 

@@ -185,7 +185,9 @@ export default {
           lessonId,
           deckTitle: fullTitle,
           userId: this.currentUserId,
-          isReview: 'true'
+          isReview: 'true',
+          isPractice: 'true',
+          activityType: 'practice'
         }
       };
 
