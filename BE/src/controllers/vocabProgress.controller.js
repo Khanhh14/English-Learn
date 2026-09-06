@@ -111,6 +111,20 @@ exports.completeLesson = async (req, res) => {
         [userId]
       );
 
+      // Mỗi bài học mới hoàn thành được tính vào tiến độ nhiệm vụ trong ngày.
+      await db.query(`
+        INSERT IGNORE INTO user_quests (user_id, quest_id, quest_date, current_progress, is_completed, is_claimed)
+        SELECT ?, q.id, CURDATE(), 0, FALSE, FALSE
+        FROM quests q
+      `, [userId]);
+      await db.query(`
+        UPDATE user_quests uq
+        JOIN quests q ON q.id = uq.quest_id
+        SET uq.current_progress = LEAST(uq.current_progress + 1, q.target_count),
+            uq.is_completed = (uq.current_progress + 1 >= q.target_count)
+        WHERE uq.user_id = ? AND uq.quest_date = CURDATE() AND uq.is_claimed = 0
+      `, [userId]);
+
       // Cập nhật thống kê ngày vào user_daily_stats
       await db.query(`
         INSERT INTO user_daily_stats (user_id, study_date, words_learned, correct_answers, wrong_answers)

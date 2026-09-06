@@ -21,17 +21,19 @@ exports.getUserMissions = async (req, res) => {
       SELECT 
         q.id, q.title AS name,
         q.reward_coins AS reward, q.target_count AS total,
-        uq.current_progress AS progress, uq.is_claimed AS completed
+        uq.current_progress AS progress,
+        uq.is_completed AS isCompleted,
+        uq.is_claimed AS completed
       FROM quests q
       JOIN user_quests uq ON q.id = uq.quest_id
       WHERE uq.user_id = ? AND uq.quest_date = ?
     `, [userId, today]);
 
-    const [[user]] = await pool.query(`SELECT xp FROM users WHERE id = ?`, [userId]);
+    const [[user]] = await pool.query(`SELECT coins FROM users WHERE id = ?`, [userId]);
 
     return res.json({
       missions,
-      totalCoins: user ? user.xp : 0
+      totalCoins: user ? user.coins : 0
     });
   } catch (error) {
     console.error('Lỗi lấy dữ liệu nhiệm vụ:', error);
@@ -83,15 +85,20 @@ exports.claimMissionReward = async (req, res) => {
       WHERE id = ?
     `, [item.id]);
 
-    // XP là đơn vị xu hiện có trong bảng users.
+    // Cộng phần thưởng vào số xu hiện có của người dùng.
     await conn.query(`
       UPDATE users 
-      SET xp = xp + ?
+      SET coins = COALESCE(coins, 0) + ?
       WHERE id = ?
     `, [item.reward_coins, userId]);
 
     await conn.commit();
-    return res.json({ success: true, reward: item.reward_coins });
+    const [[user]] = await conn.query('SELECT coins FROM users WHERE id = ?', [userId]);
+    return res.json({
+      success: true,
+      reward: item.reward_coins,
+      totalCoins: user?.coins || 0
+    });
   } catch (error) {
     if (conn) {
       await conn.rollback();
