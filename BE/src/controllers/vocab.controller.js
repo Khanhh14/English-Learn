@@ -128,7 +128,7 @@ const getSentencesByDeck = async (req, res) => {
 // 5. Lấy danh sách key bài học đã hoàn thành theo User
 const getUserProgress = async (req, res) => {
   try {
-    const userId = req.user?.id || req.query.userId || 1;
+    const userId = req.user.id;
 
     const [rows] = await pool.execute(
       `SELECT CONCAT(deck_id, '-', lesson_id) AS lesson_key
@@ -156,7 +156,7 @@ const getUserProgress = async (req, res) => {
 const completeLesson = async (req, res) => {
   try {
     const { deckId, lessonId } = req.body;
-    const userId = req.user?.id || req.body.userId || 1;
+    const userId = req.user.id;
 
     if (!deckId || !lessonId) {
       return res.status(400).json({ 

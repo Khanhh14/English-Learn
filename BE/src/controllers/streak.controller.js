@@ -44,7 +44,7 @@ async function calculateUserStreak(userId) {
 // [GET] /api/streak
 exports.getUserStreak = async (req, res) => {
   try {
-    const userId = req.user?.id || req.query.userId || 1;
+    const userId = req.user.id;
     const currentStreak = await calculateUserStreak(userId);
 
     const [todayActivity] = await db.query(
@@ -74,7 +74,7 @@ exports.getUserStreak = async (req, res) => {
 // [POST] /api/streak/record (Ghi nhận hoạt động, Streak và cộng XP)
 exports.recordDailyActivity = async (req, res) => {
   try {
-    const userId = req.user?.id || req.body.userId || 1;
+    const userId = req.user.id;
     const { wordsLearned = 0, correctAnswers = 0, wrongAnswers = 0, earnedXp = 0 } = req.body;
 
     // 1. Cập nhật bảng user_daily_stats

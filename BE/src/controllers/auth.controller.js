@@ -98,7 +98,7 @@ exports.login = async (req, res) => {
 // 3. LẤY THÔNG TIN USER HIỆN TẠI
 exports.getMe = async (req, res) => {
   try {
-    const userId = req.user?.id || req.query.userId || 1;
+    const userId = req.user.id;
 
     // Bổ sung coins vào câu SELECT
     const [users] = await db.query(
@@ -137,7 +137,7 @@ exports.getMe = async (req, res) => {
 // 4. CẬP NHẬT THÔNG TIN CÁ NHÂN
 exports.updateProfile = async (req, res) => {
   try {
-    const userId = req.user?.id || req.body.userId || 1;
+    const userId = req.user.id;
     const { name, currentPassword, newPassword } = req.body;
 
     if (!name) {
@@ -180,7 +180,7 @@ exports.updateProfile = async (req, res) => {
 // 5. ĐỔI MẬT KHẨU
 exports.changePassword = async (req, res) => {
   try {
-    const userId = req.user?.id || req.body.userId || 1;
+    const userId = req.user.id;
     const { oldPassword, newPassword } = req.body;
 
     const [users] = await db.query('SELECT password FROM users WHERE id = ?', [userId]);

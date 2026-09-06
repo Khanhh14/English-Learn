@@ -40,8 +40,7 @@ async function canCompleteLesson(userId, deckId, lessonId) {
 // [GET] /api/vocab/user-progress
 exports.getUserProgress = async (req, res) => {
   try {
-    // Lấy userId từ auth middleware hoặc query param (mặc định = 1 để test)
-    const userId = req.user?.id || req.query.userId || 1;
+    const userId = req.user.id;
 
     const query = `
       SELECT CONCAT(deck_id, '-', lesson_id) AS lesson_key
@@ -71,7 +70,7 @@ exports.getUserProgress = async (req, res) => {
 exports.completeLesson = async (req, res) => {
   try {
     const { deckId, lessonId, activityType = 'newLesson' } = req.body;
-    const userId = req.user?.id || req.body.userId || 1;
+    const userId = req.user.id;
 
     if (!deckId || !lessonId) {
       return res.status(400).json({ 
