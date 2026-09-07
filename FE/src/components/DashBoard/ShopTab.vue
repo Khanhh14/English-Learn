@@ -39,9 +39,15 @@
 <script>
 export default {
   name: 'ShopTab',
+  props: {
+    user: {
+      type: Object,
+      default: () => ({})
+    }
+  },
   data() {
     return {
-      userCoins: 1284,
+      userCoins: 0,
       shopItems: [
         { id: 1, icon: '🎨', name: 'Chủ đề màu sắc', description: 'Mở khóa chủ đề học mới với hình ảnh sinh động', price: 200 },
         { id: 2, icon: '🌟', name: 'Huy hiệu VIP', description: 'Huy hiệu đặc biệt cho thành viên tích cực', price: 500 },
@@ -50,6 +56,15 @@ export default {
         { id: 5, icon: '🎯', name: 'Thử thách hàng tuần', description: 'Mở khóa thử thách đặc biệt với phần thưởng lớn', price: 100 },
         { id: 6, icon: '👑', name: 'Gói cao cấp', description: 'Tất cả tính năng đặc biệt trong 1 tháng', price: 1000 }
       ]
+    }
+  },
+  watch: {
+    user: {
+      immediate: true,
+      deep: true,
+      handler(user) {
+        this.userCoins = Number(user?.coins || 0);
+      }
     }
   },
   methods: {

@@ -286,6 +286,7 @@ export default {
       showResult: false,
       isPlaying: false,
       isFinished: false,
+      isSavingProgress: false,
       
       // Thống kê bài học để ghi nhận vào user_daily_stats
       correctCount: 0,
@@ -515,6 +516,8 @@ export default {
     },
 
     async nextExercise() {
+      if (this.isFinished || this.isSavingProgress) return;
+
       const currentEx = this.currentExercise;
 
       // Làm sai -> đẩy về cuối hàng đợi
@@ -556,12 +559,16 @@ export default {
     },
 
     async saveLessonProgress() {
+      if (this.isSavingProgress) return;
+      this.isSavingProgress = true;
+
       try {
         const wordsLearnedCount = this.lessonWords.length;
         const headers = this.getAuthHeaders();
-        const activityType = this.resolvedLessonId === 'review-1' || this.resolvedLessonId === 'summary'
-          ? 'review'
-          : 'newLesson';
+        const activityType = this.$route?.query?.activityType
+          || (this.resolvedLessonId === 'review-1' || this.resolvedLessonId === 'summary'
+            ? 'review'
+            : 'newLesson');
 
         const progressRes = await axios.post('/api/vocab-progress/complete-lesson', {
           deckId: this.resolvedDeckId,
@@ -592,6 +599,8 @@ export default {
       } catch (error) {
         console.error('Lỗi khi lưu tiến độ bài học & streak:', error);
         throw error;
+      } finally {
+        this.isSavingProgress = false;
       }
     },
 

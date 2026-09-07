@@ -77,11 +77,12 @@
                 <ShopTab :user="user" @update-user="updateUser" />
               </div>
 
-              <div v-if="activeTab === 'missions'" class="h-full overflow-auto">
+              <div v-show="activeTab === 'missions'" class="h-full overflow-auto">
                 <MissionsTab 
                   :user="user" 
                   @change-tab="activeTab = $event" 
                   @update-user="updateUser" 
+                  @update-pending-count="updateMissionBadge"
                 />
               </div>
 
@@ -138,7 +139,7 @@ export default {
         { id: 'practice', name: 'Luyện tập', icon: '✍️' },
         { id: 'ranking', name: 'BXH', icon: '🏆' },
         { id: 'shop', name: 'Cửa hàng', icon: '🛒' },
-        { id: 'missions', name: 'Nhiệm vụ', icon: '🎯', badge: '3' },
+        { id: 'missions', name: 'Nhiệm vụ', icon: '🎯', badge: null },
         { id: 'profile', name: 'Hồ sơ', icon: '👤' }
       ]
     };
@@ -157,6 +158,13 @@ export default {
     }
   },
   methods: {
+    updateMissionBadge(count) {
+      const missionsItem = this.menuItems.find((item) => item.id === 'missions');
+      if (missionsItem) {
+        missionsItem.badge = count > 0 ? String(count) : null;
+      }
+    },
+
     loadUserData() {
       // 1. Nạp từ localStorage
       const storedUser = localStorage.getItem('user');
@@ -197,7 +205,7 @@ export default {
         return;
       }
 
-      const { chapterId, lessonId, lessonType, deckTitle } = payload || {};
+      const { chapterId, lessonId, lessonType, activityType, deckTitle } = payload || {};
       const params = {};
       if (chapterId !== undefined && chapterId !== null) params.deckId = chapterId;
 
@@ -206,6 +214,7 @@ export default {
       if (deckTitle) query.deckTitle = deckTitle;
       if (this.user.id) query.userId = this.user.id;
       if (lessonType) query.mode = lessonType;
+      if (activityType) query.activityType = activityType;
 
       this.$router.push({ name: 'learning', params, query });
     },

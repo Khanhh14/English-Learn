@@ -72,7 +72,7 @@
         v-for="mission in missions" 
         :key="mission.id"
         class="group relative bg-white border rounded-2xl p-4 md:p-5 transition-all duration-300 flex flex-col md:flex-row md:items-center justify-between gap-4"
-        :class="mission.completed 
+        :class="isMissionCompleted(mission)
           ? 'border-gray-100 bg-gray-50/70 opacity-75' 
           : 'border-gray-200/80 hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-50/50'"
       >
@@ -80,18 +80,21 @@
           <!-- Icon -->
           <div 
             class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 shadow-inner transition-transform group-hover:scale-105"
-            :class="mission.completed ? 'bg-emerald-100 text-emerald-600' : 'bg-indigo-50 text-indigo-600'"
+            :class="isMissionCompleted(mission) ? 'bg-emerald-100 text-emerald-600' : 'bg-indigo-50 text-indigo-600'"
           >
-            <span v-if="mission.completed">✓</span>
+            <span v-if="isMissionCompleted(mission)">✓</span>
             <span v-else>{{ mission.icon || getFallbackIcon(mission.name) }}</span>
           </div>
 
           <!-- Nội Dung -->
           <div class="flex-1 min-w-0 space-y-1">
             <div class="flex items-center space-x-2">
-              <h4 class="font-bold text-gray-800 truncate" :class="{ 'line-through text-gray-400': mission.completed }">
+              <h4 class="font-bold text-gray-800 truncate" :class="{ 'line-through text-gray-400': isMissionCompleted(mission) }">
                 {{ mission.name }}
               </h4>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 whitespace-nowrap">
+                {{ formatMissionType(mission.type) }}
+              </span>
               <span 
                 v-if="mission.completed" 
                 class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700"
@@ -113,7 +116,7 @@
                 <div class="flex-1 bg-gray-100 h-2 rounded-full overflow-hidden">
                   <div 
                     class="h-full rounded-full transition-all duration-500"
-                    :class="mission.completed ? 'bg-emerald-500' : 'bg-indigo-600'"
+                    :class="isMissionCompleted(mission) ? 'bg-emerald-500' : 'bg-indigo-600'"
                     :style="{ width: `${Math.min((mission.progress / mission.total) * 100, 100)}%` }"
                   ></div>
                 </div>
@@ -132,7 +135,7 @@
           </div>
 
           <button 
-            v-else-if="mission.progress >= mission.total"
+            v-else-if="isMissionCompleted(mission)"
             @click="claimReward(mission)"
             :disabled="claimingId === mission.id"
             class="w-full md:w-auto px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 disabled:opacity-50 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-200 active:scale-95 transition-all flex items-center justify-center space-x-1.5 animate-pulse cursor-pointer"
@@ -153,7 +156,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 
-const emit = defineEmits(['update-user']);
+const emit = defineEmits(['update-user', 'update-pending-count']);
 const missions = ref([]);
 const totalCoins = ref(0);
 const isLoading = ref(true);
@@ -169,11 +172,26 @@ try {
 const currentUserId = ref(storedUser?.id || localStorage.getItem('userId'));
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
 
-const completedCount = computed(() => missions.value.filter(m => m.isCompleted || m.completed).length);
+const isMissionCompleted = (mission) => Boolean(
+  mission?.isCompleted || mission?.completed || Number(mission?.progress) >= Number(mission?.total)
+);
+const formatMissionType = (type) => {
+  const labels = {
+    daily: 'Ngày',
+    weekly: 'Tuần',
+    monthly: 'Tháng',
+    yearly: 'Năm'
+  };
+  return labels[String(type || '').toLowerCase()] || type || 'Ngày';
+};
+const completedCount = computed(() => missions.value.filter(isMissionCompleted).length);
+const pendingCount = computed(() => Math.max(missions.value.length - completedCount.value, 0));
 const progressPercentage = computed(() => {
   if (missions.value.length === 0) return 0;
   return Math.round((completedCount.value / missions.value.length) * 100);
 });
+
+const emitPendingCount = () => emit('update-pending-count', pendingCount.value);
 
 // Tự gán icon tương ứng nếu database không lưu cột icon
 const getFallbackIcon = (title = '') => {
@@ -207,6 +225,7 @@ const fetchMissions = async () => {
 
     missions.value = Array.isArray(data.missions) ? data.missions : [];
     totalCoins.value = Number(data.totalCoins) || 0;
+    emitPendingCount();
   } catch (error) {
     console.error('Không thể tải danh sách nhiệm vụ:', error);
     errorMessage.value = error.message || 'Không thể tải danh sách nhiệm vụ.';
@@ -236,7 +255,8 @@ const claimReward = async (mission) => {
     if (res.ok && data.success) {
       mission.completed = true;
       mission.isCompleted = true;
-      totalCoins.value = Number(data.totalCoins) || totalCoins.value + Number(data.reward || 0);
+      emitPendingCount();
+      totalCoins.value = Number(data.totalCoins ?? totalCoins.value + Number(data.reward || 0));
       const stored = JSON.parse(localStorage.getItem('user') || '{}');
       const updatedUser = { ...stored, coins: totalCoins.value };
       localStorage.setItem('user', JSON.stringify(updatedUser));
