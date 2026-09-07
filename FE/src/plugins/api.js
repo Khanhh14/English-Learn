@@ -6,7 +6,10 @@ const API = axios.create({
 
 // Tự động gắn token nếu có đăng nhập
 API.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('token')
+    || localStorage.getItem('access_token')
+    || sessionStorage.getItem('token')
+    || sessionStorage.getItem('access_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

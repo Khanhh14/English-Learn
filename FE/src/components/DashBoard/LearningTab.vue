@@ -258,7 +258,10 @@ export default {
   methods: {
     // 1. Lấy headers có Bearer Token để gửi kèm request
     getAuthHeaders() {
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const token = localStorage.getItem('token')
+        || localStorage.getItem('access_token')
+        || sessionStorage.getItem('token')
+        || sessionStorage.getItem('access_token');
       return token ? { Authorization: `Bearer ${token}` } : {};
     },
 

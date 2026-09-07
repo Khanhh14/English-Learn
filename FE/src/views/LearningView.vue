@@ -276,6 +276,7 @@ export default {
       currentWords: [],
       lessonWords: [],
       currentSentences: [],
+      completedLessonKeys: [],
       score: 10,
       currentXp: 0,
       loading: true,
@@ -329,6 +330,7 @@ export default {
     this.fetchData();
     this.fetchCurrentStreak();
     this.fetchCurrentUser();
+    this.fetchUserProgress();
   },
   methods: {
     async fetchCurrentStreak() {
@@ -349,12 +351,26 @@ export default {
         const res = await axios.get('/api/auth/me', {
           headers: this.getAuthHeaders()
         });
-        const user = res.data?.data;
-        if (user) {
+        const user = res.data?.data || res.data?.user || res.data;
+        if (user && (user.xp !== undefined || user.points !== undefined)) {
           this.currentXp = Number(user.xp ?? user.points ?? 0);
         }
       } catch (error) {
         console.error('Lỗi khi lấy XP người dùng:', error);
+      }
+    },
+
+    async fetchUserProgress() {
+      try {
+        const res = await axios.get('/api/vocab-progress/user-progress', {
+          headers: this.getAuthHeaders()
+        });
+        const progress = res.data?.data;
+        if (Array.isArray(progress)) {
+          this.completedLessonKeys = progress;
+        }
+      } catch (error) {
+        console.error('Lỗi khi lấy tiến độ bài học:', error);
       }
     },
 
@@ -567,6 +583,8 @@ export default {
         if (streakRes.data?.data?.xp !== undefined) {
           this.currentXp = Number(streakRes.data.data.xp);
         }
+        await this.fetchCurrentUser();
+        await this.fetchUserProgress();
 
         if (progressRes?.data?.success === false) {
           throw new Error(progressRes.data.message || 'Không thể lưu tiến độ bài học');
@@ -578,7 +596,10 @@ export default {
     },
 
     getAuthHeaders() {
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const token = localStorage.getItem('token')
+        || localStorage.getItem('access_token')
+        || sessionStorage.getItem('token')
+        || sessionStorage.getItem('access_token');
       return token ? { Authorization: `Bearer ${token}` } : {};
     },
 

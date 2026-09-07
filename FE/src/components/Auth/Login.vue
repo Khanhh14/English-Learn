@@ -208,7 +208,7 @@ export default {
       this.isLoading = true
 
       try {
-        const baseUrl = 'https://english-learn-1.onrender.com'
+        const baseUrl = import.meta.env.VITE_API_BASE_URL || ''
 
         const response = await fetch(`${baseUrl}/api/auth/login`, {
           method: 'POST',
@@ -241,6 +241,7 @@ export default {
           username: rawUser.username || '',
           email: rawUser.email || this.email,
           role: rawUser.role || 'user',
+          xp: Number(rawUser.xp ?? rawUser.points ?? 0),
           streak: rawUser.streak || rawUser.streak_count || 0,
           level: rawUser.level || 1,
           points: rawUser.points || rawUser.xp || 0,
