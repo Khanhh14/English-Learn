@@ -97,12 +97,14 @@ exports.recordDailyActivity = async (req, res) => {
     // 3. Tính toán lại streak thực tế
     const streak = await calculateUserStreak(userId);
     await db.query('UPDATE users SET streak_count = ? WHERE id = ?', [streak, userId]);
+    const [[user]] = await db.query('SELECT xp FROM users WHERE id = ?', [userId]);
 
     return res.status(200).json({
       success: true,
       message: 'Cập nhật tiến độ ngày & XP thành công',
       data: {
-        currentStreak: streak
+        currentStreak: streak,
+        xp: Number(user?.xp || 0)
       }
     });
   } catch (error) {

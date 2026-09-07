@@ -226,7 +226,7 @@ export default {
   props: {
     userId: {
       type: [Number, String],
-      default: 1
+      default: null
     }
   },
   emits: ['start-learning'],
@@ -294,7 +294,6 @@ export default {
       try {
         // Gọi API Streak
         const streakRes = await axios.get('/api/streak', {
-          params: { userId: this.userId },
           headers: this.getAuthHeaders()
         });
         if (streakRes.data?.success && streakRes.data.data) {
@@ -303,12 +302,11 @@ export default {
 
         // Gọi API lấy thông tin người dùng (/api/auth/me) để lấy XP
         const userRes = await axios.get('/api/auth/me', {
-          params: { userId: this.userId },
           headers: this.getAuthHeaders()
         });
 
         if (userRes.data?.success && userRes.data.data) {
-          this.totalXp = userRes.data.data.xp || userRes.data.data.points || 0;
+          this.totalXp = Number(userRes.data.data.xp ?? userRes.data.data.points ?? 0);
         }
       } catch (error) {
         console.warn('Lỗi khi tải dữ liệu streak/XP:', error);
@@ -319,7 +317,6 @@ export default {
     async fetchUserProgress() {
       try {
         const res = await axios.get('/api/vocab-progress/user-progress', {
-          params: { userId: this.userId },
           headers: this.getAuthHeaders()
         });
         if (res.data?.success && Array.isArray(res.data.data)) {
@@ -417,7 +414,7 @@ export default {
         await axios.post('/api/vocab-progress/complete-lesson', {
           deckId: chapterId,
           lessonId: lessonId,
-          userId: this.userId
+          activityType: this.isLessonCompleted(chapterId, lessonId) ? 'review' : 'newLesson'
         }, {
           headers: this.getAuthHeaders()
         });

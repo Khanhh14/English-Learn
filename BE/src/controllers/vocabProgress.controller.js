@@ -32,9 +32,12 @@ async function canCompleteLesson(userId, deckId, lessonId) {
   if (deckIndex <= 0) return true;
 
   const previousDeckId = decks[deckIndex - 1].id;
-  return LESSON_SEQUENCE.every((previousLessonId) =>
-    hasCompletedLesson(userId, previousDeckId, previousLessonId)
+  const previousDeckProgress = await Promise.all(
+    LESSON_SEQUENCE.map((previousLessonId) =>
+      hasCompletedLesson(userId, previousDeckId, previousLessonId)
+    )
   );
+  return previousDeckProgress.every(Boolean);
 }
 
 // [GET] /api/vocab/user-progress
@@ -126,6 +129,10 @@ exports.completeLesson = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      data: {
+        lessonKey: `${deckId}-${lessonId}`,
+        isCompleted: true
+      },
       message: isAlreadyCompleted
         ? 'Ôn tập bài học thành công!'
         : 'Chúc mừng! Bạn đã hoàn thành bài học mới.'

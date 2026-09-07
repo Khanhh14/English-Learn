@@ -21,6 +21,10 @@
 
         <!-- Badges -->
         <div class="flex items-center gap-2">
+          <div class="flex items-center gap-1.5 rounded-2xl border-2 border-amber-200/80 bg-amber-50/80 px-3.5 py-1.5 text-xs font-black text-amber-700 shadow-xs sm:text-sm">
+            <span>⭐</span>
+            <span>{{ currentXp }} <span class="text-[10px] font-bold uppercase sm:text-xs">XP</span></span>
+          </div>
           <div class="flex items-center gap-1.5 rounded-2xl border-2 border-orange-200/80 bg-orange-50/80 px-3.5 py-1.5 text-xs font-black text-orange-700 shadow-xs sm:text-sm">
             <span>🔥</span>
             <span>{{ currentStreakCount }} <span class="text-[10px] font-bold uppercase sm:text-xs">ngày</span></span>
@@ -265,7 +269,7 @@ export default {
     lessonId: { type: String, default: 'new-1' },
     deckTitle: { type: String, default: 'Bài học' },
     streak: { type: Number, default: 0 },
-    userId: { type: [Number, String], default: 1 }
+    userId: { type: [Number, String], default: null }
   },
   data() {
     return {
@@ -273,6 +277,7 @@ export default {
       lessonWords: [],
       currentSentences: [],
       score: 10,
+      currentXp: 0,
       loading: true,
       lessonQueue: [],
       currentStep: 0,
@@ -318,24 +323,38 @@ export default {
         return this.$route.query.deckTitle;
       }
       return this.deckTitle || 'Bài học';
-    },
-    resolvedUserId() {
-      return (this.$route && this.$route.query && this.$route.query.userId) || this.userId || 1;
     }
   },
   mounted() {
     this.fetchData();
     this.fetchCurrentStreak();
+    this.fetchCurrentUser();
   },
   methods: {
     async fetchCurrentStreak() {
       try {
-        const res = await axios.get(`/api/streak?userId=${this.resolvedUserId}`);
+        const res = await axios.get('/api/streak', {
+          headers: this.getAuthHeaders()
+        });
         if (res.data?.success && res.data.data) {
           this.currentStreakCount = res.data.data.currentStreak ?? 0;
         }
       } catch (error) {
         console.error('Lỗi khi lấy thông tin streak:', error);
+      }
+    },
+
+    async fetchCurrentUser() {
+      try {
+        const res = await axios.get('/api/auth/me', {
+          headers: this.getAuthHeaders()
+        });
+        const user = res.data?.data;
+        if (user) {
+          this.currentXp = Number(user.xp ?? user.points ?? 0);
+        }
+      } catch (error) {
+        console.error('Lỗi khi lấy XP người dùng:', error);
       }
     },
 
@@ -512,44 +531,55 @@ export default {
       }
 
       // Hoàn tất toàn bộ câu trong buổi học
-      this.isFinished = true;
       if (!this.hasIncreasedStreak) {
         this.currentStreakCount += 1;
         this.hasIncreasedStreak = true;
       }
       await this.saveLessonProgress();
+      this.isFinished = true;
     },
 
     async saveLessonProgress() {
       try {
         const wordsLearnedCount = this.lessonWords.length;
+        const headers = this.getAuthHeaders();
+        const activityType = this.resolvedLessonId === 'review-1' || this.resolvedLessonId === 'summary'
+          ? 'review'
+          : 'newLesson';
 
-        const [progressRes, streakRes] = await Promise.all([
-          axios.post('/api/vocab-progress/complete-lesson', {
-            userId: this.resolvedUserId,
-            deckId: this.resolvedDeckId,
-            lessonId: this.resolvedLessonId
-          }),
-          axios.post('/api/streak/record', {
-            userId: this.resolvedUserId,
-            wordsLearned: wordsLearnedCount,
-            correctAnswers: this.correctCount,
-            wrongAnswers: this.wrongCount,
-            earnedXp: 10,
-            incrementStreak: true
-          })
-        ]);
+        const progressRes = await axios.post('/api/vocab-progress/complete-lesson', {
+          deckId: this.resolvedDeckId,
+          lessonId: this.resolvedLessonId,
+          activityType
+        }, { headers });
+
+        const streakRes = await axios.post('/api/streak/record', {
+          wordsLearned: wordsLearnedCount,
+          correctAnswers: this.correctCount,
+          wrongAnswers: this.wrongCount,
+          earnedXp: 10,
+          incrementStreak: true
+        }, { headers });
 
         if (streakRes.data?.data?.currentStreak !== undefined) {
           this.currentStreakCount = streakRes.data.data.currentStreak;
         }
+        if (streakRes.data?.data?.xp !== undefined) {
+          this.currentXp = Number(streakRes.data.data.xp);
+        }
 
         if (progressRes?.data?.success === false) {
-          console.warn('Progress save returned unsuccessful result', progressRes.data);
+          throw new Error(progressRes.data.message || 'Không thể lưu tiến độ bài học');
         }
       } catch (error) {
         console.error('Lỗi khi lưu tiến độ bài học & streak:', error);
+        throw error;
       }
+    },
+
+    getAuthHeaders() {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      return token ? { Authorization: `Bearer ${token}` } : {};
     },
 
     resetLessonFlow() {

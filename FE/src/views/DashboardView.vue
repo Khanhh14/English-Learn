@@ -62,7 +62,7 @@
           <div class="dashboard-main flex-1 min-w-0 h-full">
             <div class="h-full overflow-hidden rounded-3xl bg-white/60 backdrop-blur-xl p-6 shadow-2xl border border-white/50">
               <div v-if="activeTab === 'learning'" class="h-full overflow-auto">
-                <LearningTab :user-id="user.id || 1" @start-learning="goToLearning" />
+                <LearningTab :user-id="user.id" @start-learning="goToLearning" />
               </div>
 
               <div v-if="activeTab === 'practice'" class="h-full overflow-auto">
