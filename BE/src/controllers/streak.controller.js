@@ -76,6 +76,7 @@ exports.recordDailyActivity = async (req, res) => {
   try {
     const userId = req.user.id;
     const { wordsLearned = 0, correctAnswers = 0, wrongAnswers = 0, earnedXp = 0 } = req.body;
+    const activityXp = Number(earnedXp) > 0 ? 10 : 0;
 
     // 1. Cập nhật bảng user_daily_stats
     const query = `
@@ -89,9 +90,9 @@ exports.recordDailyActivity = async (req, res) => {
     await db.query(query, [userId, wordsLearned, correctAnswers, wrongAnswers]);
 
     // 2. Cộng XP tích lũy trực tiếp vào bảng users
-    if (earnedXp > 0) {
-      await db.query('UPDATE users SET xp = COALESCE(xp, 0) + ? WHERE id = ?', [earnedXp, userId]);
-      await incrementQuestProgress(db, userId, 'xp', earnedXp);
+    if (activityXp > 0) {
+      await db.query('UPDATE users SET xp = COALESCE(xp, 0) + ? WHERE id = ?', [activityXp, userId]);
+      await incrementQuestProgress(db, userId, 'xp', activityXp);
     }
 
     // 3. Tính toán lại streak thực tế
