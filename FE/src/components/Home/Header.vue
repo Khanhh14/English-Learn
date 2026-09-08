@@ -91,7 +91,7 @@
                     @click="closeUserDropdown"
                     class="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-extrabold text-slate-700 transition hover:bg-indigo-50 hover:text-indigo-600"
                   >
-                    <span class="text-base">👤</span>
+                    <font-awesome-icon icon="fa-solid fa-user" class="text-sm w-4 text-center" />
                     <span>Xem thông tin cá nhân</span>
                   </router-link>
 
@@ -99,7 +99,7 @@
                     @click="handleLogout" 
                     class="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-extrabold text-rose-600 transition hover:bg-rose-50"
                   >
-                    <span class="text-base">🚪</span>
+                    <font-awesome-icon icon="fa-solid fa-right-from-bracket" class="text-sm w-4 text-center" />
                     <span>Đăng xuất</span>
                   </button>
                 </div>
@@ -170,17 +170,19 @@
             
             <router-link 
               :to="{ path: '/dashboard', query: { tab: 'profile' } }"
-              class="block font-bold text-slate-700 px-4 py-2 hover:bg-white/30 rounded-xl mx-4 text-xs"
+              class="flex items-center gap-2.5 font-bold text-slate-700 px-4 py-2 hover:bg-white/30 rounded-xl mx-4 text-xs"
               @click="closeMobileMenu"
             >
-              👤 Xem thông tin cá nhân
+              <font-awesome-icon icon="fa-solid fa-user" class="text-sm w-4 text-center" />
+              <span>Xem thông tin cá nhân</span>
             </router-link>
 
             <button 
               @click="handleLogout" 
-              class="w-full text-left font-bold text-rose-600 px-4 py-2 hover:bg-white/30 rounded-xl mx-4 text-xs"
+              class="flex items-center gap-2.5 w-full text-left font-bold text-rose-600 px-4 py-2 hover:bg-white/30 rounded-xl mx-4 text-xs"
             >
-              🚪 Đăng xuất
+              <font-awesome-icon icon="fa-solid fa-right-from-bracket" class="text-sm w-4 text-center" />
+              <span>Đăng xuất</span>
             </button>
           </template>
 

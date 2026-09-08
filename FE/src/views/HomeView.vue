@@ -40,7 +40,7 @@
                 <span>Học ngay</span>
                 <span class="group-hover:translate-x-1 transition-transform">→</span>
               </button>
-              <button @click="scrollToRoadmap" class="bg-white/70 backdrop-blur-xl text-gray-700 px-8 py-4 rounded-2xl font-bold shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 flex items-center space-x-3 border-2 border-white/50 hover:border-indigo-200">
+              <button @click="goToRoadmap" class="bg-white/70 backdrop-blur-xl text-gray-700 px-8 py-4 rounded-2xl font-bold shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 flex items-center space-x-3 border-2 border-white/50 hover:border-indigo-200">
                 <span>🗺️</span>
                 <span>Xem lộ trình</span>
               </button>
@@ -162,7 +162,7 @@
         </div>
 
         <div class="grid md:grid-cols-4 gap-6">
-          <div class="group bg-white/60 backdrop-blur-xl rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2 border border-white/50 text-center">
+          <div class="group bg-white/60 backdrop-blur-xl rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2 border border-white/50 text-center cursor-pointer" @click="goToRoadmapLevel('a1')">
             <div class="w-20 h-20 bg-gradient-to-br from-emerald-400 to-green-400 rounded-full flex items-center justify-center text-3xl shadow-lg mx-auto mb-4 group-hover:scale-110 transition-transform">
               🌱
             </div>
@@ -174,7 +174,7 @@
             </div>
           </div>
 
-          <div class="group bg-white/60 backdrop-blur-xl rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2 border border-white/50 text-center">
+          <div class="group bg-white/60 backdrop-blur-xl rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2 border border-white/50 text-center cursor-pointer" @click="goToRoadmapLevel('a2')">
             <div class="w-20 h-20 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center text-3xl shadow-lg mx-auto mb-4 group-hover:scale-110 transition-transform">
               🌿
             </div>
@@ -186,7 +186,7 @@
             </div>
           </div>
 
-          <div class="group bg-white/60 backdrop-blur-xl rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2 border border-white/50 text-center">
+          <div class="group bg-white/60 backdrop-blur-xl rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2 border border-white/50 text-center cursor-pointer" @click="goToRoadmapLevel('b1')">
             <div class="w-20 h-20 bg-gradient-to-br from-indigo-400 to-purple-400 rounded-full flex items-center justify-center text-3xl shadow-lg mx-auto mb-4 group-hover:scale-110 transition-transform">
               🌳
             </div>
@@ -198,7 +198,7 @@
             </div>
           </div>
 
-          <div class="group bg-white/60 backdrop-blur-xl rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2 border border-white/50 text-center">
+          <div class="group bg-white/60 backdrop-blur-xl rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2 border border-white/50 text-center cursor-pointer" @click="goToRoadmapLevel('b2')">
             <div class="w-20 h-20 bg-gradient-to-br from-pink-400 to-rose-400 rounded-full flex items-center justify-center text-3xl shadow-lg mx-auto mb-4 group-hover:scale-110 transition-transform">
               🌴
             </div>
@@ -212,7 +212,7 @@
         </div>
 
         <div class="text-center mt-10">
-          <button @click="handleActionLearning" class="bg-white/70 backdrop-blur-xl text-gray-700 px-10 py-4 rounded-2xl font-bold shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 flex items-center space-x-2 border-2 border-white/50 hover:border-indigo-200 mx-auto">
+          <button @click="goToRoadmap" class="bg-white/70 backdrop-blur-xl text-gray-700 px-10 py-4 rounded-2xl font-bold shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 flex items-center space-x-2 border-2 border-white/50 hover:border-indigo-200 mx-auto">
             <span>📖</span>
             <span>Bắt đầu học ngay</span>
             <span>→</span>
@@ -287,11 +287,11 @@ export default {
         this.$router.push({ path: '/login', query: { redirect: '/dashboard' } });
       }
     },
-    scrollToRoadmap() {
-      const element = document.getElementById('roadmap');
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+    goToRoadmap() {
+      this.$router.push('/roadmap/a1');
+    },
+    goToRoadmapLevel(level) {
+      this.$router.push(`/roadmap/${level}`);
     }
   }
 }

@@ -12,7 +12,9 @@ import {
   faStairs as fasStairs,
   faHeart as fasHeart,
   faRoute, // Icon lộ trình
-  faBrain  // Icon não bộ / AI (gói free)
+  faBrain, // Icon não bộ / AI (gói free)
+  faUser,  // Icon thông tin cá nhân
+  faRightFromBracket // Icon đăng xuất
 } from '@fortawesome/free-solid-svg-icons'
 
 // 2. Import các icon Regular (Nét viền mảnh - far)
@@ -31,7 +33,9 @@ library.add(
   fasHeart, 
   farHeart,
   faRoute,
-  faBrain
+  faBrain,
+  faUser,
+  faRightFromBracket
 )
 
 export default FontAwesomeIcon
