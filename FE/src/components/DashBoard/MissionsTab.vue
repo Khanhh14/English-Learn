@@ -39,7 +39,7 @@
           <span class="text-xs text-amber-100 font-medium">Xu khả dụng</span>
         </div>
         <router-link 
-          to="/dashboard/shop" 
+          :to="{ path: '/dashboard', query: { tab: 'shop' } }"
           class="w-full py-2.5 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-xl text-xs font-bold transition-all text-center"
         >
           Vào Cửa Hàng Đổi Quà →

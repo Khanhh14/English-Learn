@@ -21,19 +21,26 @@
               <div class="w-32 h-32 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full mx-auto flex items-center justify-center text-5xl text-white shadow-xl overflow-hidden font-bold">
                 <img 
                   v-if="currentUser.avatar && !isEditing" 
-                  :src="currentUser.avatar" 
+                  :src="getAvatarUrl(currentUser.avatar)"
                   alt="Avatar" 
                   class="w-full h-full object-cover"
                 />
                 <span v-else-if="!isEditing">{{ userInitial }}</span>
+                <img v-else-if="selectedAvatar" :src="getAvatarUrl(selectedAvatar)" alt="Avatar đang chọn" class="w-full h-full object-cover" />
                 <span v-else class="text-4xl">📷</span>
               </div>
-              <button v-if="isEditing" class="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-lg hover:shadow-xl transition-all">
+              <button v-if="isEditing" @click="showAvatarPicker = !showAvatarPicker" class="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-lg hover:shadow-xl transition-all">
                 <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
               </button>
+            </div>
+            <div v-if="isEditing && showAvatarPicker" class="mt-4 grid grid-cols-4 gap-2">
+              <button v-for="avatar in currentUser.ownedAvatars || []" :key="avatar" @click="selectAvatar(avatar)" class="rounded-xl p-1 border-2" :class="selectedAvatar === avatar ? 'border-indigo-500' : 'border-transparent'">
+                <img :src="getAvatarUrl(avatar)" alt="Avatar đã sở hữu" class="w-full aspect-square rounded-lg object-cover" />
+              </button>
+              <p v-if="!(currentUser.ownedAvatars || []).length" class="col-span-4 text-xs text-gray-500">Hãy mua avatar trong Cửa hàng trước.</p>
             </div>
             
             <div class="mt-4">
@@ -219,7 +226,9 @@ export default {
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
-      }
+      },
+      selectedAvatar: '',
+      showAvatarPicker: false
     };
   },
   computed: {
@@ -249,11 +258,16 @@ export default {
     this.initUserData();
   },
   methods: {
+    getAvatarUrl(avatar) {
+      return encodeURI(avatar);
+    },
+
     initUserData() {
       const stored = localStorage.getItem('user');
       if (stored) {
         try {
           this.currentUser = JSON.parse(stored);
+          this.selectedAvatar = this.currentUser.avatar || '';
           this.editedUser.name = this.currentUser.name || this.currentUser.username || '';
         } catch (e) {
           console.error('[ProfileTab] Lỗi parse localStorage user:', e);
@@ -280,6 +294,7 @@ export default {
         const fetchedData = res.data?.data || res.data?.user || res.data;
         if (fetchedData) {
           this.currentUser = { ...this.currentUser, ...fetchedData };
+          this.selectedAvatar = this.currentUser.avatar || '';
           localStorage.setItem('user', JSON.stringify(this.currentUser));
           if (!this.isEditing) {
             this.editedUser.name = this.currentUser.name || this.currentUser.username || '';
@@ -311,6 +326,8 @@ export default {
 
     resetForm() {
       this.editedUser.name = this.currentUser.name || this.currentUser.username || '';
+      this.selectedAvatar = this.currentUser.avatar || '';
+      this.showAvatarPicker = false;
       this.passwordForm = {
         currentPassword: '',
         newPassword: '',
@@ -362,6 +379,12 @@ export default {
           await axios.put('/api/auth/profile', payload, {
             headers: { Authorization: `Bearer ${token}` }
           });
+          if (this.selectedAvatar && this.selectedAvatar !== this.currentUser.avatar) {
+            await axios.put('/api/auth/avatar', { avatar: this.selectedAvatar }, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            this.currentUser.avatar = this.selectedAvatar;
+          }
         }
 
         this.currentUser.name = payload.name;
@@ -378,6 +401,11 @@ export default {
       } finally {
         this.saving = false;
       }
+    }
+    ,
+    async selectAvatar(avatar) {
+      this.selectedAvatar = avatar;
+      this.showAvatarPicker = false;
     }
   }
 };
