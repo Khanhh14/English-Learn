@@ -5,6 +5,33 @@ const { sendResetCodeEmail } = require('../services/emailService');
 const { calculateUserStreak } = require('./streak.controller');
 
 const otpStore = new Map();
+const AVATAR_PRICE = 300;
+const AVAILABLE_AVATARS = [
+  '/image/Tom Aura в TikTok.jpg',
+  '/image/IShowClutch florkofcows logo.jpg',
+  '/image/download.jpg',
+  '/image/Avata shin.jpg'
+];
+
+async function ensureAvatarTable() {
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS user_avatars (
+      user_id BIGINT NOT NULL,
+      avatar VARCHAR(255) NOT NULL,
+      purchased_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (user_id, avatar)
+    )
+  `);
+}
+
+async function getOwnedAvatars(userId) {
+  await ensureAvatarTable();
+  const [rows] = await db.query(
+    'SELECT avatar FROM user_avatars WHERE user_id = ? ORDER BY purchased_at ASC',
+    [userId]
+  );
+  return rows.map((row) => row.avatar);
+}
 
 async function getUserStats(userId) {
   const [lessonRows] = await db.query(
@@ -73,6 +100,7 @@ exports.login = async (req, res) => {
     );
 
     const stats = await getUserStats(user.id);
+    const ownedAvatars = await getOwnedAvatars(user.id);
 
     res.status(200).json({
       message: 'Đăng nhập thành công!',
@@ -86,6 +114,8 @@ exports.login = async (req, res) => {
         xp: user.xp || 0,
         points: user.xp || 0,
         coins: user.coins || 0, // Trả về số xu
+        avatar: user.avatar || '',
+        ownedAvatars,
         joinDate: user.created_at,
         ...stats
       }
@@ -102,7 +132,7 @@ exports.getMe = async (req, res) => {
 
     // Bổ sung coins vào câu SELECT
     const [users] = await db.query(
-      'SELECT id, username, email, role, streak_count, daily_goal, xp, coins, created_at FROM users WHERE id = ?',
+      'SELECT id, username, email, role, streak_count, daily_goal, xp, coins, avatar, created_at FROM users WHERE id = ?',
       [userId]
     );
 
@@ -112,6 +142,7 @@ exports.getMe = async (req, res) => {
 
     const user = users[0];
     const stats = await getUserStats(user.id);
+    const ownedAvatars = await getOwnedAvatars(user.id);
 
     res.status(200).json({
       success: true,
@@ -125,12 +156,93 @@ exports.getMe = async (req, res) => {
         xp: user.xp || 0,
         points: user.xp || 0,
         coins: user.coins || 0, // Trả về số xu
+        avatar: user.avatar || '',
+        ownedAvatars,
         joinDate: user.created_at,
         ...stats
       }
     });
   } catch (error) {
     res.status(500).json({ message: 'Lỗi server!', error: error.message });
+  }
+};
+
+exports.purchaseAvatar = async (req, res) => {
+  const { avatar } = req.body;
+  if (!AVAILABLE_AVATARS.includes(avatar)) {
+    return res.status(400).json({ message: 'Avatar không hợp lệ!' });
+  }
+
+  const connection = await db.getConnection();
+  try {
+    await ensureAvatarTable();
+    await connection.beginTransaction();
+
+    const [ownedRows] = await connection.query(
+      'SELECT avatar FROM user_avatars WHERE user_id = ? AND avatar = ? FOR UPDATE',
+      [req.user.id, avatar]
+    );
+    if (ownedRows.length > 0) {
+      await connection.rollback();
+      return res.status(409).json({ message: 'Bạn đã sở hữu avatar này!' });
+    }
+
+    const [userRows] = await connection.query(
+      'SELECT coins FROM users WHERE id = ? FOR UPDATE',
+      [req.user.id]
+    );
+    if (userRows.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({ message: 'Người dùng không tồn tại!' });
+    }
+    if (Number(userRows[0].coins || 0) < AVATAR_PRICE) {
+      await connection.rollback();
+      return res.status(400).json({ message: 'Bạn không đủ COIN để mua avatar!' });
+    }
+
+    await connection.query(
+      'INSERT INTO user_avatars (user_id, avatar) VALUES (?, ?)',
+      [req.user.id, avatar]
+    );
+    await connection.query(
+      'UPDATE users SET coins = coins - ? WHERE id = ?',
+      [AVATAR_PRICE, req.user.id]
+    );
+    await connection.commit();
+
+    const ownedAvatars = await getOwnedAvatars(req.user.id);
+    return res.status(200).json({
+      message: 'Mua avatar thành công!',
+      data: { coins: Number(userRows[0].coins) - AVATAR_PRICE, ownedAvatars }
+    });
+  } catch (error) {
+    await connection.rollback();
+    return res.status(500).json({ message: 'Không thể mua avatar!', error: error.message });
+  } finally {
+    connection.release();
+  }
+};
+
+exports.setAvatar = async (req, res) => {
+  const { avatar } = req.body;
+  if (!AVAILABLE_AVATARS.includes(avatar)) {
+    return res.status(400).json({ message: 'Avatar không hợp lệ!' });
+  }
+
+  try {
+    await ensureAvatarTable();
+    const [ownedRows] = await db.query(
+      'SELECT avatar FROM user_avatars WHERE user_id = ? AND avatar = ?',
+      [req.user.id, avatar]
+    );
+    if (ownedRows.length === 0) {
+      return res.status(403).json({ message: 'Bạn chưa sở hữu avatar này!' });
+    }
+
+    await db.query('UPDATE users SET avatar = ? WHERE id = ?', [avatar, req.user.id]);
+    return res.status(200).json({ message: 'Đã cập nhật avatar!', data: { avatar } });
+  } catch (error) {
+    return res.status(500).json({ message: 'Không thể cập nhật avatar!', error: error.message });
   }
 };
 

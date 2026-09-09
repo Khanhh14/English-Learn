@@ -16,6 +16,8 @@ router.post('/register', authController.register);
 router.post('/login', authController.login);
 router.get('/me', verifyToken, authController.getMe);
 router.put('/profile', verifyToken, authController.updateProfile);
+router.post('/avatars/purchase', verifyToken, authController.purchaseAvatar);
+router.put('/avatar', verifyToken, authController.setAvatar);
 router.post('/change-password', verifyToken, authController.changePassword);
 router.post('/forgot-password', authController.forgotPassword);
 router.post('/reset-password', authController.resetPassword);
