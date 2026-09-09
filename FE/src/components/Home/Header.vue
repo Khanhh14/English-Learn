@@ -49,9 +49,17 @@
               @click.stop="toggleUserDropdown" 
               class="flex items-center gap-2.5 rounded-full border border-white/80 bg-white/80 py-1.5 pl-1.5 pr-3 shadow-md backdrop-blur-md transition-all hover:bg-white hover:shadow-lg active:scale-95"
             >
-              <div class="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 text-xs font-black text-white shadow-sm ring-2 ring-indigo-100">
-                {{ userInitials }}
+              <!-- Avatar Button Desktop -->
+              <div class="flex h-8 w-8 items-center justify-center rounded-full overflow-hidden bg-gradient-to-tr from-indigo-600 to-purple-600 text-xs font-black text-white shadow-sm ring-2 ring-indigo-100">
+                <img 
+                  v-if="currentUser?.avatar" 
+                  :src="getAvatarUrl(currentUser.avatar)" 
+                  class="h-full w-full object-cover" 
+                  alt="Avatar" 
+                />
+                <span v-else>{{ userInitials }}</span>
               </div>
+
               <span class="max-w-[110px] truncate text-xs font-extrabold text-slate-700">{{ userDisplayName }}</span>
               <div class="flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-slate-500">
                 <svg class="h-3 w-3 transition-transform duration-200" :class="{ 'rotate-180': isUserDropdownOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -74,9 +82,17 @@
                 class="absolute right-0 mt-3 w-60 rounded-3xl border border-white/80 bg-white/95 p-3.5 shadow-2xl shadow-indigo-500/10 backdrop-blur-2xl ring-1 ring-slate-900/5"
               >
                 <div class="mb-3 flex items-center gap-3 px-1">
-                  <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 font-black text-white text-sm shadow-md">
-                    {{ userInitials }}
+                  <!-- Avatar Dropdown Box -->
+                  <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl overflow-hidden bg-gradient-to-tr from-indigo-500 to-purple-600 font-black text-white text-sm shadow-md">
+                    <img 
+                      v-if="currentUser?.avatar" 
+                      :src="getAvatarUrl(currentUser.avatar)" 
+                      class="h-full w-full object-cover" 
+                      alt="Avatar" 
+                    />
+                    <span v-else>{{ userInitials }}</span>
                   </div>
+
                   <div class="min-w-0 flex-1">
                     <h4 class="truncate text-xs font-black text-slate-800">{{ userDisplayName }}</h4>
                     <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-600">
@@ -157,8 +173,15 @@
           <!-- Mobile Logged In State -->
           <template v-if="isLoggedIn">
             <div class="flex items-center gap-3 px-4 py-3 bg-white/60 backdrop-blur-md rounded-2xl border border-white/50 mx-4">
-              <div class="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 font-black text-white text-xs">
-                {{ userInitials }}
+              <!-- Avatar Mobile Menu -->
+              <div class="flex h-9 w-9 items-center justify-center rounded-full overflow-hidden bg-gradient-to-tr from-indigo-500 to-purple-600 font-black text-white text-xs">
+                <img 
+                  v-if="currentUser?.avatar" 
+                  :src="getAvatarUrl(currentUser.avatar)" 
+                  class="h-full w-full object-cover" 
+                  alt="Avatar" 
+                />
+                <span v-else>{{ userInitials }}</span>
               </div>
               <div class="flex-1 min-w-0">
                 <p class="text-xs font-bold text-gray-800 truncate">{{ userDisplayName }}</p>
@@ -233,11 +256,18 @@ export default {
   mounted() {
     this.checkAuthStatus();
     window.addEventListener('click', this.closeUserDropdown);
+    // Lắng nghe sự kiện cập nhật user từ các component khác
+    window.addEventListener('user-updated', this.checkAuthStatus);
   },
   beforeUnmount() {
     window.removeEventListener('click', this.closeUserDropdown);
+    window.removeEventListener('user-updated', this.checkAuthStatus);
   },
   methods: {
+    getAvatarUrl(avatar) {
+      if (!avatar) return '';
+      return encodeURI(avatar);
+    },
     checkAuthStatus() {
       const token = localStorage.getItem('token') || localStorage.getItem('access_token') || sessionStorage.getItem('token');
       const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
