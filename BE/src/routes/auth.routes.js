@@ -2,24 +2,21 @@
 const express = require('express');
 const router = express.Router();
 
-// 1. Kiểm tra lại tên file controller trong BE/src/controllers/
-// Nếu file của bạn là auth.controller.js thì để '../controllers/auth.controller'
-// Nếu file của bạn là authController.js thì để '../controllers/authController'
 const authController = require('../controllers/auth.controller'); 
-
-// 2. Import middleware xác thực Token
-// Kiểm tra thư mục chứa file middleware là 'middleware' hay 'middlewares'
 const verifyToken = require('../middleware/auth.middleware'); 
 
-// Các Endpoints
+// Authen & Profile
 router.post('/register', authController.register);
 router.post('/login', authController.login);
 router.get('/me', verifyToken, authController.getMe);
 router.put('/profile', verifyToken, authController.updateProfile);
-router.post('/avatars/purchase', verifyToken, authController.purchaseAvatar);
-router.put('/avatar', verifyToken, authController.setAvatar);
 router.post('/change-password', verifyToken, authController.changePassword);
 router.post('/forgot-password', authController.forgotPassword);
 router.post('/reset-password', authController.resetPassword);
+
+// Shop & Avatar APIs
+router.get('/avatars/shop', authController.getShopAvatars); // Endpoint lấy danh sách avatar bày bán
+router.post('/avatars/purchase', verifyToken, authController.purchaseAvatar); // Mua avatar
+router.put('/avatar', verifyToken, authController.setAvatar); // Đặt avatar làm đại diện
 
 module.exports = router;
