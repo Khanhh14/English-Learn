@@ -18,8 +18,8 @@
               <div>
                 <!-- Brand Logo -->
                 <router-link to="/" class="flex items-center gap-3 px-3 py-2 mb-4 rounded-2xl transition hover:bg-white/50 group" title="Về trang chủ">
-                  <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-xl shadow-md group-hover:scale-105 transition-transform">
-                    📚
+                  <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white text-lg shadow-md group-hover:scale-105 transition-transform">
+                    <font-awesome-icon :icon="['fas', 'book-open']" />
                   </div>
                   <div>
                     <h1 class="text-lg font-black bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">LinguaFlow</h1>
@@ -33,25 +33,38 @@
                     v-for="item in menuItems" 
                     :key="item.id" 
                     @click="activeTab = item.id" 
-                    class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 text-left" 
+                    class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 text-left group" 
                     :class="activeTab === item.id 
-                      ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg' 
-                      : 'text-gray-600 hover:bg-white/50 hover:text-indigo-600'"
+                      ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg shadow-indigo-200' 
+                      : 'text-gray-600 hover:bg-white/60 hover:text-indigo-600'"
                   >
-                    <span class="text-xl">{{ item.icon }}</span>
+                    <span 
+                      class="w-5 text-center text-lg flex items-center justify-center transition-transform group-hover:scale-110"
+                      :class="activeTab === item.id ? 'text-white' : item.color"
+                    >
+                      <font-awesome-icon :icon="['fas', item.iconName]" />
+                    </span>
                     <span class="font-medium">{{ item.name }}</span>
-                    <span v-if="item.badge" class="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full">{{ item.badge }}</span>
+                    <span 
+                      v-if="item.badge" 
+                      class="ml-auto text-white text-xs px-2 py-0.5 rounded-full font-bold shadow-sm"
+                      :class="activeTab === item.id ? 'bg-white/30 text-white' : 'bg-red-500 text-white'"
+                    >
+                      {{ item.badge }}
+                    </span>
                   </button>
                 </nav>
               </div>
 
-              <!-- Footer Sidebar: Chỉ giữ lại nút Trang chủ -->
+              <!-- Footer Sidebar -->
               <div class="pt-4 border-t border-gray-200/50">
                 <router-link 
                   to="/" 
-                  class="w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-all font-medium text-sm"
+                  class="w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-gray-600 hover:bg-white/60 hover:text-indigo-600 transition-all font-medium text-sm group"
                 >
-                  <span class="text-lg">🏠</span>
+                  <span class="w-5 text-center text-base flex items-center justify-center text-indigo-500 transition-transform group-hover:scale-110">
+                    <font-awesome-icon :icon="['fas', 'house']" />
+                  </span>
                   <span>Trang chủ</span>
                 </router-link>
               </div>
@@ -127,7 +140,7 @@ export default {
         level: 1,
         points: 0,
         xp: 0,
-        coins: 0, // Bổ sung trường coin
+        coins: 0,
         progress: 0,
         joinDate: '',
         streak: 0,
@@ -135,12 +148,12 @@ export default {
         totalLessons: 0
       },
       menuItems: [
-        { id: 'learning', name: 'Học ngay', icon: '📚' },
-        { id: 'practice', name: 'Luyện tập', icon: '✍️' },
-        { id: 'ranking', name: 'BXH', icon: '🏆' },
-        { id: 'shop', name: 'Cửa hàng', icon: '🛒' },
-        { id: 'missions', name: 'Nhiệm vụ', icon: '🎯', badge: null },
-        { id: 'profile', name: 'Hồ sơ', icon: '👤' }
+        { id: 'learning', name: 'Học ngay', iconName: 'book', color: 'text-blue-500' },
+        { id: 'practice', name: 'Luyện tập', iconName: 'pen-to-square', color: 'text-emerald-500' },
+        { id: 'ranking', name: 'BXH', iconName: 'trophy', color: 'text-amber-500' },
+        { id: 'shop', name: 'Cửa hàng', iconName: 'cart-shopping', color: 'text-rose-500' },
+        { id: 'missions', name: 'Nhiệm vụ', iconName: 'bullseye', color: 'text-indigo-500', badge: null },
+        { id: 'profile', name: 'Hồ sơ', iconName: 'user', color: 'text-purple-500' }
       ]
     };
   },
@@ -166,7 +179,6 @@ export default {
     },
 
     loadUserData() {
-      // 1. Nạp từ localStorage
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
         try {
@@ -176,8 +188,6 @@ export default {
           console.error('Lỗi phân tích dữ liệu user từ localStorage:', e);
         }
       }
-
-      // 2. Đồng bộ dữ liệu mới nhất từ server backend
       this.fetchUserFromServer();
     },
 

@@ -11,10 +11,17 @@ import {
   faBookOpen,
   faStairs as fasStairs,
   faHeart as fasHeart,
-  faRoute, // Icon lộ trình
-  faBrain, // Icon não bộ / AI (gói free)
-  faUser,  // Icon thông tin cá nhân
-  faRightFromBracket // Icon đăng xuất
+  faRoute,
+  faBrain,
+  faUser,
+  faRightFromBracket,
+  // Thêm các icon dùng cho DashboardView
+  faBook,
+  faPenToSquare,
+  faTrophy,
+  faCartShopping,
+  faBullseye,
+  faHouse
 } from '@fortawesome/free-solid-svg-icons'
 
 // 2. Import các icon Regular (Nét viền mảnh - far)
@@ -35,7 +42,14 @@ library.add(
   faRoute,
   faBrain,
   faUser,
-  faRightFromBracket
+  faRightFromBracket,
+  // Đăng ký các icon mới
+  faBook,
+  faPenToSquare,
+  faTrophy,
+  faCartShopping,
+  faBullseye,
+  faHouse
 )
 
 export default FontAwesomeIcon
