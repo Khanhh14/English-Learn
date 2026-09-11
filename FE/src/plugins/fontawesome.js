@@ -15,13 +15,15 @@ import {
   faBrain,
   faUser,
   faRightFromBracket,
-  // Thêm các icon dùng cho DashboardView
   faBook,
   faPenToSquare,
   faTrophy,
   faCartShopping,
   faBullseye,
-  faHouse
+  faHouse,
+  // Thêm faStar và faFire
+  faStar,
+  faFire
 } from '@fortawesome/free-solid-svg-icons'
 
 // 2. Import các icon Regular (Nét viền mảnh - far)
@@ -43,13 +45,15 @@ library.add(
   faBrain,
   faUser,
   faRightFromBracket,
-  // Đăng ký các icon mới
   faBook,
   faPenToSquare,
   faTrophy,
   faCartShopping,
   faBullseye,
-  faHouse
+  faHouse,
+  // Đăng ký faStar và faFire
+  faStar,
+  faFire
 )
 
 export default FontAwesomeIcon

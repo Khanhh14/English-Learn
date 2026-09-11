@@ -1,5 +1,14 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+    <!-- SVG Defs ẩn để tạo gradient màu lửa cho icon FontAwesome -->
+    <svg width="0" height="0" class="absolute pointer-events-none" aria-hidden="true" focusable="false">
+      <linearGradient id="fireGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+        <stop offset="0%" stop-color="#dc2626" />
+        <stop offset="50%" stop-color="#ea580c" />
+        <stop offset="100%" stop-color="#fbbf24" />
+      </linearGradient>
+    </svg>
+
     <div class="space-y-8">
       <!-- Header -->
       <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -11,12 +20,26 @@
         </div>
 
         <div class="flex items-center gap-3">
+          <!-- XP Badge -->
           <div class="flex items-center gap-2 rounded-2xl border-2 border-amber-200 bg-amber-50/80 px-4 py-2 text-sm font-black text-amber-700 shadow-xs">
-            <span>⭐</span>
+            <font-awesome-icon :icon="['fas', 'star']" class="text-amber-500 text-base" />
             <span>{{ totalXp }} <span class="text-xs uppercase">XP</span></span>
           </div>
-          <div class="flex items-center gap-2 rounded-2xl border-2 border-orange-200 bg-orange-50/80 px-4 py-2 text-sm font-black text-orange-700 shadow-xs">
-            <span>🔥</span>
+
+          <!-- Streak Badge -->
+          <div 
+            :class="[
+              'flex items-center gap-2 rounded-2xl border-2 px-4 py-2 text-sm font-black transition-all shadow-xs',
+              streak > 0 
+                ? 'border-orange-200 bg-orange-50/80 text-orange-700' 
+                : 'border-slate-200 bg-slate-50 text-slate-400'
+            ]"
+          >
+            <font-awesome-icon 
+              :icon="['fas', 'fire']" 
+              class="text-base transition-colors"
+              :style="streak > 0 ? { fill: 'url(#fireGradient)' } : { fill: '#94a3b8' }"
+            />
             <span>{{ streak }} <span class="text-xs uppercase">ngày streak</span></span>
           </div>
         </div>
@@ -256,7 +279,6 @@ export default {
     this.fetchStreakAndUserStats();
   },
   methods: {
-    // 1. Lấy headers có Bearer Token để gửi kèm request
     getAuthHeaders() {
       const token = localStorage.getItem('token')
         || localStorage.getItem('access_token')
@@ -265,7 +287,6 @@ export default {
       return token ? { Authorization: `Bearer ${token}` } : {};
     },
 
-    // 2. Kiểm tra trạng thái hoàn thành bài học
     isLessonCompleted(chapterId, lessonId) {
       return this.completedLessonKeys.includes(`${chapterId}-${lessonId}`);
     },
@@ -292,10 +313,8 @@ export default {
       );
     },
 
-    // 3. Lấy chuỗi streak và XP thực tế lưu trong CSDL
     async fetchStreakAndUserStats() {
       try {
-        // Gọi API Streak
         const streakRes = await axios.get('/api/streak', {
           headers: this.getAuthHeaders()
         });
@@ -303,7 +322,6 @@ export default {
           this.streak = streakRes.data.data.currentStreak || 0;
         }
 
-        // Gọi API lấy thông tin người dùng (/api/auth/me) để lấy XP
         const userRes = await axios.get('/api/auth/me', {
           headers: this.getAuthHeaders()
         });
@@ -316,7 +334,6 @@ export default {
       }
     },
 
-    // 4. Lấy dữ liệu tiến độ bài học từ backend
     async fetchUserProgress() {
       try {
         const res = await axios.get('/api/vocab-progress/user-progress', {
@@ -330,7 +347,6 @@ export default {
       }
     },
 
-    // 5. Tải danh sách bộ chủ đề (decks), số từ, tiến độ, streak và XP
     async fetchLearningData() {
       try {
         this.loading = true;
@@ -372,7 +388,6 @@ export default {
       }
     },
 
-    // 6. Chọn chương
     async selectChapter(chapterId) {
       const chapterIndex = this.chapters.findIndex((chapter) => chapter.id === chapterId);
       const chapter = this.chapters[chapterIndex];
@@ -393,7 +408,6 @@ export default {
       }
     },
 
-    // 7. Phát sự kiện bắt đầu học
     handleStartLesson(chapterId, lessonId) {
       const chapter = this.chapters.find((item) => item.id === chapterId);
       const lesson = chapter?.lessons.find((item) => item.id === lessonId);
@@ -410,7 +424,6 @@ export default {
       });
     },
 
-    // 8. Cập nhật ngay state và gọi lại streak/XP sau khi hoàn tất bài học
     async markLessonComplete(chapterId, lessonId) {
       const lessonKey = `${chapterId}-${lessonId}`;
       try {
