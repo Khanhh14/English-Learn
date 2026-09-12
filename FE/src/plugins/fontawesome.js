@@ -2,12 +2,12 @@
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
-// 1. Import các icon Solid (Nét đặc - fas)
+// 1. Solid Icons (fas)
 import { 
   faBars, 
   faLocationDot, 
   faPhone, 
-  faEnvelope,
+  faEnvelope, 
   faBookOpen,
   faStairs as fasStairs,
   faHeart as fasHeart,
@@ -21,12 +21,29 @@ import {
   faCartShopping,
   faBullseye,
   faHouse,
-  // Thêm faStar và faFire
   faStar,
-  faFire
+  faFire,
+  faEye,
+  faGem,
+  faRocket,
+  faEarthAmericas,
+  faUserTie,
+  faChalkboardUser,
+  faCode,
+  faLink,
+  faLightbulb,
+  faHandshake,
+  faShareNodes,
+  faSeedling,
+  faLeaf,
+  faTree,
+  faHeadphones,
+  faPenNib,
+  faRotate,
+  faArrowRight
 } from '@fortawesome/free-solid-svg-icons'
 
-// 2. Import các icon Regular (Nét viền mảnh - far)
+// 2. Regular Icons (far)
 import { 
   faHeart as farHeart
 } from '@fortawesome/free-regular-svg-icons'
@@ -51,9 +68,26 @@ library.add(
   faCartShopping,
   faBullseye,
   faHouse,
-  // Đăng ký faStar và faFire
   faStar,
-  faFire
+  faFire,
+  faEye,
+  faGem,
+  faRocket,
+  faEarthAmericas,
+  faUserTie,
+  faChalkboardUser,
+  faCode,
+  faLink,
+  faLightbulb,
+  faHandshake,
+  faShareNodes,
+  faSeedling,
+  faLeaf,
+  faTree,
+  faHeadphones,
+  faPenNib,
+  faRotate,
+  faArrowRight
 )
 
 export default FontAwesomeIcon
