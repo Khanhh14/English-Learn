@@ -40,7 +40,10 @@ import {
   faHeadphones,
   faPenNib,
   faRotate,
-  faArrowRight
+  faArrowRight,
+  faGamepad,
+  faMobileScreenButton,
+  faCompass
 } from '@fortawesome/free-solid-svg-icons'
 
 // 2. Regular Icons (far)
@@ -87,7 +90,10 @@ library.add(
   faHeadphones,
   faPenNib,
   faRotate,
-  faArrowRight
+  faArrowRight,
+  faGamepad,
+  faMobileScreenButton,
+  faCompass
 )
 
 export default FontAwesomeIcon

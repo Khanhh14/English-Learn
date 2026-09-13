@@ -18,7 +18,7 @@
           <!-- Left Content -->
           <div class="space-y-8">
             <div class="inline-flex items-center space-x-2 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full border border-white/50 shadow-lg">
-              <span class="text-yellow-500">⭐</span>
+              <font-awesome-icon :icon="['fas', 'star']" class="text-amber-500" />
               <span class="text-sm font-medium text-gray-700">Hơn 10,000+ học viên tin tưởng</span>
             </div>
             
@@ -34,14 +34,14 @@
             </p>
 
             <div class="flex flex-wrap gap-4">
-              <button @click="handleActionLearning" class="group bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-2xl hover:shadow-3xl transition-all transform hover:scale-105 flex items-center space-x-3 relative overflow-hidden">
+              <button @click="handleActionLearning" class="group bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-2xl hover:shadow-3xl transition-all transform hover:scale-105 flex items-center space-x-3 relative overflow-hidden cursor-pointer">
                 <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
-                <span>🚀</span>
+                <font-awesome-icon :icon="['fas', 'rocket']" />
                 <span>Học ngay</span>
-                <span class="group-hover:translate-x-1 transition-transform">→</span>
+                <font-awesome-icon :icon="['fas', 'arrow-right']" class="group-hover:translate-x-1 transition-transform" />
               </button>
-              <button @click="goToRoadmap" class="bg-white/70 backdrop-blur-xl text-gray-700 px-8 py-4 rounded-2xl font-bold shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 flex items-center space-x-3 border-2 border-white/50 hover:border-indigo-200">
-                <span>🗺️</span>
+              <button @click="goToRoadmap" class="bg-white/70 backdrop-blur-xl text-gray-700 px-8 py-4 rounded-2xl font-bold shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 flex items-center space-x-3 border-2 border-white/50 hover:border-indigo-200 cursor-pointer">
+                <font-awesome-icon :icon="['fas', 'compass']" class="text-indigo-600" />
                 <span>Xem lộ trình</span>
               </button>
             </div>
@@ -64,14 +64,14 @@
           <div class="relative">
             <div class="relative bg-white/40 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/50">
               <!-- Floating Elements -->
-              <div class="absolute -top-6 -right-6 w-20 h-20 bg-gradient-to-br from-yellow-400 to-orange-400 rounded-2xl flex items-center justify-center text-3xl shadow-xl animate-float">
-                ⭐
+              <div class="absolute -top-6 -right-6 w-20 h-20 bg-gradient-to-br from-yellow-400 to-orange-400 rounded-2xl flex items-center justify-center text-3xl shadow-xl text-white animate-float">
+                <font-awesome-icon :icon="['fas', 'star']" />
               </div>
-              <div class="absolute -bottom-4 -left-4 w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-400 rounded-2xl flex items-center justify-center text-2xl shadow-xl animate-float animation-delay-1000">
-                🎯
+              <div class="absolute -bottom-4 -left-4 w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-400 rounded-2xl flex items-center justify-center text-2xl shadow-xl text-white animate-float animation-delay-1000">
+                <font-awesome-icon :icon="['fas', 'bullseye']" />
               </div>
-              <div class="absolute top-1/2 -right-8 w-14 h-14 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center text-xl shadow-xl animate-float animation-delay-2000">
-                💡
+              <div class="absolute top-1/2 -right-8 w-14 h-14 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center text-xl shadow-xl text-white animate-float animation-delay-2000">
+                <font-awesome-icon :icon="['fas', 'lightbulb']" />
               </div>
 
               <!-- Mock Learning Interface -->
@@ -88,7 +88,7 @@
                 <div class="bg-white/60 backdrop-blur-sm rounded-2xl p-6 space-y-4">
                   <div class="flex items-center justify-between">
                     <span class="text-sm font-medium text-gray-600">Từ vựng hôm nay</span>
-                    <span class="text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full">75%</span>
+                    <span class="text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full font-bold">75%</span>
                   </div>
                   <div class="w-full bg-gray-200 rounded-full h-2">
                     <div class="bg-gradient-to-r from-indigo-400 to-purple-400 h-2 rounded-full" style="width: 75%"></div>
@@ -107,8 +107,9 @@
                   </div>
                 </div>
 
-                <button @click="handleActionLearning" class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
-                  Tiếp tục học →
+                <button @click="handleActionLearning" class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 flex items-center justify-center gap-2 cursor-pointer">
+                  <span>Tiếp tục học</span>
+                  <font-awesome-icon :icon="['fas', 'arrow-right']" class="text-xs" />
                 </button>
               </div>
             </div>
@@ -127,24 +128,24 @@
 
         <div class="grid md:grid-cols-3 gap-8">
           <div class="group bg-white/60 backdrop-blur-xl rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2 border border-white/50">
-            <div class="w-16 h-16 bg-gradient-to-br from-indigo-400 to-purple-400 rounded-2xl flex items-center justify-center text-3xl shadow-lg mb-6 group-hover:scale-110 transition-transform">
-              🧠
+            <div class="w-16 h-16 bg-gradient-to-br from-indigo-400 to-purple-400 rounded-2xl flex items-center justify-center text-3xl shadow-lg mb-6 group-hover:scale-110 transition-transform text-white">
+              <font-awesome-icon :icon="['fas', 'brain']" />
             </div>
             <h3 class="text-xl font-bold text-gray-800 mb-3">Học thông minh</h3>
             <p class="text-gray-600">AI phân tích điểm mạnh, yếu để tối ưu hóa lộ trình học cá nhân hóa</p>
           </div>
 
           <div class="group bg-white/60 backdrop-blur-xl rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2 border border-white/50">
-            <div class="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-400 rounded-2xl flex items-center justify-center text-3xl shadow-lg mb-6 group-hover:scale-110 transition-transform">
-              🎮
+            <div class="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-400 rounded-2xl flex items-center justify-center text-3xl shadow-lg mb-6 group-hover:scale-110 transition-transform text-white">
+              <font-awesome-icon :icon="['fas', 'gamepad']" />
             </div>
             <h3 class="text-xl font-bold text-gray-800 mb-3">Học mà chơi</h3>
             <p class="text-gray-600">Game hóa việc học với điểm thưởng, cấp độ và thử thách hằng ngày</p>
           </div>
 
           <div class="group bg-white/60 backdrop-blur-xl rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2 border border-white/50">
-            <div class="w-16 h-16 bg-gradient-to-br from-pink-400 to-rose-400 rounded-2xl flex items-center justify-center text-3xl shadow-lg mb-6 group-hover:scale-110 transition-transform">
-              📱
+            <div class="w-16 h-16 bg-gradient-to-br from-pink-400 to-rose-400 rounded-2xl flex items-center justify-center text-3xl shadow-lg mb-6 group-hover:scale-110 transition-transform text-white">
+              <font-awesome-icon :icon="['fas', 'mobile-screen-button']" />
             </div>
             <h3 class="text-xl font-bold text-gray-800 mb-3">Mọi lúc mọi nơi</h3>
             <p class="text-gray-600">Học trên mọi thiết bị, đồng bộ tiến độ và học mọi lúc bạn muốn</p>
@@ -157,122 +158,87 @@
     <section id="roadmap" class="relative z-10 py-20">
       <div class="container mx-auto px-4 max-w-6xl">
         <div class="text-center mb-12">
-          <h2 class="text-4xl font-bold text-gray-800 mb-4">🗺️ Lộ trình học tập</h2>
+          <h2 class="text-4xl font-bold text-gray-800 mb-4 flex items-center justify-center gap-3">
+            <font-awesome-icon :icon="['fas', 'route']" class="text-indigo-600" />
+            <span>Lộ trình học tập</span>
+          </h2>
           <p class="text-gray-600 max-w-2xl mx-auto">Từ cơ bản đến nâng cao, phù hợp với mọi trình độ</p>
         </div>
 
         <div class="grid md:grid-cols-4 gap-6">
           <div class="group bg-white/60 backdrop-blur-xl rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2 border border-white/50 text-center cursor-pointer" @click="goToRoadmapLevel('a1')">
-            <div class="w-20 h-20 bg-gradient-to-br from-emerald-400 to-green-400 rounded-full flex items-center justify-center text-3xl shadow-lg mx-auto mb-4 group-hover:scale-110 transition-transform">
-              🌱
+            <div class="w-20 h-20 bg-gradient-to-br from-emerald-400 to-green-400 rounded-full flex items-center justify-center text-3xl shadow-lg mx-auto mb-4 group-hover:scale-110 transition-transform text-white">
+              <font-awesome-icon :icon="['fas', 'seedling']" />
             </div>
             <h3 class="text-lg font-bold text-gray-800 mb-2">A1 - Beginner</h3>
             <p class="text-sm text-gray-600">Làm quen với bảng chữ cái, từ vựng cơ bản và câu đơn giản</p>
             <div class="mt-4 flex items-center justify-center space-x-1">
               <span class="text-xs text-gray-500">12 bài học</span>
-              <span class="text-xs bg-gray-200 px-2 py-1 rounded-full">Mới bắt đầu</span>
+              <span class="text-xs bg-gray-200 px-2 py-1 rounded-full font-bold">Mới bắt đầu</span>
             </div>
           </div>
 
           <div class="group bg-white/60 backdrop-blur-xl rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2 border border-white/50 text-center cursor-pointer" @click="goToRoadmapLevel('a2')">
-            <div class="w-20 h-20 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center text-3xl shadow-lg mx-auto mb-4 group-hover:scale-110 transition-transform">
-              🌿
+            <div class="w-20 h-20 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center text-3xl shadow-lg mx-auto mb-4 group-hover:scale-110 transition-transform text-white">
+              <font-awesome-icon :icon="['fas', 'leaf']" />
             </div>
             <h3 class="text-lg font-bold text-gray-800 mb-2">A2 - Elementary</h3>
             <p class="text-sm text-gray-600">Mở rộng vốn từ, học các cấu trúc câu cơ bản và giao tiếp thường ngày</p>
             <div class="mt-4 flex items-center justify-center space-x-1">
               <span class="text-xs text-gray-500">15 bài học</span>
-              <span class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">Phổ biến</span>
+              <span class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full font-bold">Phổ biến</span>
             </div>
           </div>
 
           <div class="group bg-white/60 backdrop-blur-xl rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2 border border-white/50 text-center cursor-pointer" @click="goToRoadmapLevel('b1')">
-            <div class="w-20 h-20 bg-gradient-to-br from-indigo-400 to-purple-400 rounded-full flex items-center justify-center text-3xl shadow-lg mx-auto mb-4 group-hover:scale-110 transition-transform">
-              🌳
+            <div class="w-20 h-20 bg-gradient-to-br from-indigo-400 to-purple-400 rounded-full flex items-center justify-center text-3xl shadow-lg mx-auto mb-4 group-hover:scale-110 transition-transform text-white">
+              <font-awesome-icon :icon="['fas', 'tree']" />
             </div>
             <h3 class="text-lg font-bold text-gray-800 mb-2">B1 - Intermediate</h3>
             <p class="text-sm text-gray-600">Nâng cao từ vựng, học các chủ đề chuyên sâu và phát triển kỹ năng viết</p>
             <div class="mt-4 flex items-center justify-center space-x-1">
               <span class="text-xs text-gray-500">20 bài học</span>
-              <span class="text-xs bg-purple-100 text-purple-600 px-2 py-1 rounded-full">Nâng cao</span>
+              <span class="text-xs bg-purple-100 text-purple-600 px-2 py-1 rounded-full font-bold">Nâng cao</span>
             </div>
           </div>
 
           <div class="group bg-white/60 backdrop-blur-xl rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2 border border-white/50 text-center cursor-pointer" @click="goToRoadmapLevel('b2')">
-            <div class="w-20 h-20 bg-gradient-to-br from-pink-400 to-rose-400 rounded-full flex items-center justify-center text-3xl shadow-lg mx-auto mb-4 group-hover:scale-110 transition-transform">
-              🌴
+            <div class="w-20 h-20 bg-gradient-to-br from-pink-400 to-rose-400 rounded-full flex items-center justify-center text-3xl shadow-lg mx-auto mb-4 group-hover:scale-110 transition-transform text-white">
+              <font-awesome-icon :icon="['fas', 'route']" />
             </div>
             <h3 class="text-lg font-bold text-gray-800 mb-2">B2 - Upper</h3>
             <p class="text-sm text-gray-600">Thành thạo giao tiếp, học thành ngữ và văn hóa Anh-Mỹ</p>
             <div class="mt-4 flex items-center justify-center space-x-1">
               <span class="text-xs text-gray-500">25 bài học</span>
-              <span class="text-xs bg-pink-100 text-pink-600 px-2 py-1 rounded-full">Thử thách</span>
+              <span class="text-xs bg-pink-100 text-pink-600 px-2 py-1 rounded-full font-bold">Thử thách</span>
             </div>
           </div>
         </div>
 
         <div class="text-center mt-10">
-          <button @click="goToRoadmap" class="bg-white/70 backdrop-blur-xl text-gray-700 px-10 py-4 rounded-2xl font-bold shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 flex items-center space-x-2 border-2 border-white/50 hover:border-indigo-200 mx-auto">
-            <span>📖</span>
+          <button @click="goToRoadmap" class="bg-white/70 backdrop-blur-xl text-gray-700 px-10 py-4 rounded-2xl font-bold shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 flex items-center space-x-2 border-2 border-white/50 hover:border-indigo-200 mx-auto cursor-pointer">
+            <font-awesome-icon :icon="['fas', 'book-open']" class="text-indigo-600" />
             <span>Bắt đầu học ngay</span>
-            <span>→</span>
+            <font-awesome-icon :icon="['fas', 'arrow-right']" class="text-xs" />
           </button>
         </div>
       </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="relative z-10 bg-white/30 backdrop-blur-xl border-t border-white/30 py-12">
-      <div class="container mx-auto px-4 max-w-6xl">
-        <div class="grid md:grid-cols-4 gap-8">
-          <div>
-            <div class="flex items-center space-x-3 mb-4">
-              <span class="text-2xl">📚</span>
-              <span class="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">LinguaFlow</span>
-            </div>
-            <p class="text-sm text-gray-600">Học tiếng Anh thông minh với công nghệ AI</p>
-          </div>
-          <div>
-            <h4 class="font-bold text-gray-800 mb-3">Sản phẩm</h4>
-            <ul class="space-y-2 text-sm text-gray-600">
-              <li><a href="#" class="hover:text-indigo-600 transition-colors">Tính năng</a></li>
-              <li><a href="#" class="hover:text-indigo-600 transition-colors">Lộ trình</a></li>
-              <li><a href="#" class="hover:text-indigo-600 transition-colors">Bảng giá</a></li>
-            </ul>
-          </div>
-          <div>
-            <h4 class="font-bold text-gray-800 mb-3">Hỗ trợ</h4>
-            <ul class="space-y-2 text-sm text-gray-600">
-              <li><a href="#" class="hover:text-indigo-600 transition-colors">FAQ</a></li>
-              <li><a href="#" class="hover:text-indigo-600 transition-colors">Liên hệ</a></li>
-              <li><a href="#" class="hover:text-indigo-600 transition-colors">Blog</a></li>
-            </ul>
-          </div>
-          <div>
-            <h4 class="font-bold text-gray-800 mb-3">Kết nối</h4>
-            <div class="flex space-x-4">
-              <a href="#" class="text-2xl hover:text-indigo-600 transition-colors">📘</a>
-              <a href="#" class="text-2xl hover:text-indigo-600 transition-colors">📸</a>
-              <a href="#" class="text-2xl hover:text-indigo-600 transition-colors">🐦</a>
-              <a href="#" class="text-2xl hover:text-indigo-600 transition-colors">▶️</a>
-            </div>
-          </div>
-        </div>
-        <div class="border-t border-white/30 mt-8 pt-8 text-center text-sm text-gray-500">
-          <p>© 2026 LinguaFlow. Made with 💜</p>
-        </div>
-      </div>
-    </footer>
+    <!-- Footer Component đã được tách riêng -->
+    <Footer />
   </div>
 </template>
 
 <script>
 import Header from '@/components/Home/Header.vue'
+import Footer from '@/components/Home/Footer.vue'
 
 export default {
   name: 'HomeView',
   components: {
-    Header
+    Header,
+    Footer
   },
   methods: {
     checkIsLoggedIn() {
@@ -288,10 +254,10 @@ export default {
       }
     },
     goToRoadmap() {
-      this.$router.push('/roadmap/a1');
+      this.$router.push('/roadmap');
     },
     goToRoadmapLevel(level) {
-      this.$router.push(`/roadmap/${level}`);
+      this.$router.push(`/roadmap?level=${level}`);
     }
   }
 }
